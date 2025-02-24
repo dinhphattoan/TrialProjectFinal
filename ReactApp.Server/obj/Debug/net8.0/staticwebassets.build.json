@@ -1,0 +1,24 @@
+{
+  "Version": 1,
+  "Hash": "PZFd35g0M1sgaLZqV4iRFmWEHM1aDxV8yTJ40Jcb3M0=",
+  "Source": "ReactApp.Server",
+  "BasePath": "_content/ReactApp.Server",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [
+    {
+      "Identity": "C:\\Users\\toan.dinh\\source\\repos\\ReactApp\\reactapp.client\\reactapp.client.esproj",
+      "Version": 2,
+      "Source": "reactapp.client",
+      "GetPublishAssetsTargets": "GetCurrentProjectPublishStaticWebAssetItems",
+      "AdditionalPublishProperties": "Configuration=Debug;Platform=AnyCPU",
+      "AdditionalPublishPropertiesToRemove": "WebPublishProfileFile;TargetFramework",
+      "GetBuildAssetsTargets": "GetCurrentProjectBuildStaticWebAssetItems",
+      "AdditionalBuildProperties": "Configuration=Debug;Platform=AnyCPU",
+      "AdditionalBuildPropertiesToRemove": "WebPublishProfileFile;TargetFramework"
+    }
+  ],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

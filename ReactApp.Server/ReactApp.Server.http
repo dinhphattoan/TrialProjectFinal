@@ -1,0 +1,27 @@
+@ReactApp.Server_HostAddress = http://localhost:5111
+
+POST {{ReactApp.Server_HostAddress}}/api/Accounts/login
+Content-Type: application/json
+Accept: application/json
+{
+  "username": "toandeptrai12345",
+  "password": "Daicasang15-"
+}
+
+###
+
+POST {{ReactApp.Server_HostAddress}}/api/Accounts/register
+Content-Type: application/json
+Accept: application/json
+{
+  "email": "thefox1612@gmail.com",
+  "username": "toandeptrai12345",
+  "password": "Daicasang15-"
+}
+###
+POST {{ReactApp.Server_HostAddress}}/api/Accounts/logout
+Content-Type: application/json
+Accept: application/json
+{
+
+}
