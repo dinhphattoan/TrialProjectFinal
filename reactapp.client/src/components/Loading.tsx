@@ -6,9 +6,7 @@ const LoadingComponent: React.FC = () => {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'white',
-        width: '100vw',
-        height: '100vh'
+        height:'100%'
     }}>
         <CircularProgress size="5rem" />
     </Box>

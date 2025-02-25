@@ -41,7 +41,7 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 await SeedData.InitializeUserRole(app.Services);
-
+await SeedData.InitialGlossaryRecord(app.Services);
 app.UseDefaultFiles();
 app.UseStaticFiles();
 

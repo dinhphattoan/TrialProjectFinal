@@ -1,12 +1,12 @@
-import { Container, ThemeProvider } from '@mui/material';
-import theme from './theme';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './components/Login';
 import UserSessionValidation from './validation';
-import React, {  } from 'react';
+import React from 'react';
 import LoadingComponent from './components/Loading';
 import HomePage from './components/Home';
 import GlossaryPage from './pages/glossary';
+import PlaceHolder from './pages/placeholder';
+import ThemeApp from './theme';
 
 
 const App: React.FC = () => {
@@ -27,30 +27,26 @@ const App: React.FC = () => {
         return <LoadingComponent />;
     }
     return (
-        <ThemeProvider theme={theme}>
+        <ThemeApp>
             <BrowserRouter>
-                <Container>
                     <Routes>
                         <Route
-                            path="/*"
+                            path="/"
                             element={<HomePage />}
                         >
+                            
                             <Route path="glossary" element={<GlossaryPage />} />
+                            <Route index element={<PlaceHolder />} />
+                            <Route path="*" element={<PlaceHolder />
+                        }/>
                         </Route>
                         <Route
                             path="/login"
-                            element={
-                                !isLoggedIn ? <LoginPage /> : <Navigate to="/" replace />
-                            }
-                        />
-                        <Route path="*" element={
-                            <Navigate to={'/home'} />
-                        }/>
+                            element={!isLoggedIn ? <LoginPage /> : <Navigate to="/" replace />} />
+
                     </Routes>
-                </Container>
             </BrowserRouter>
-               
-        </ThemeProvider>
+        </ThemeApp>
     );
 };
 

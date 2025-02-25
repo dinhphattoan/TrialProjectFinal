@@ -1,4 +1,3 @@
-import theme from '../theme';
 import { Box, Card, CardMedia, CardContent, FormControl, FormLabel, TextField, Typography, Button, Link, CircularProgress } from '@mui/material';
 import * as React from 'react';
 import homeLogoImage from '../assets/mainlogo.png'
@@ -39,13 +38,13 @@ const LogInFormContent: React.FC = () => {
             }
             const data = await response.json();
             localStorage.setItem('jwt', data.token);
-            navigate('/',{replace: true});
+            navigate('/', { replace: true });
         }
         catch (error: any) {
             console.error('Login error', error);
             alert(error.message);
         }
-        
+
     };
     return (
         <Box
@@ -54,7 +53,7 @@ const LogInFormContent: React.FC = () => {
                 justifyContent: 'center',
                 alignItems: 'center',
                 flexGrow: 1,
-                backgroundColor: theme.palette.background.default,
+                // backgroundColor: theme.palette.background.default,
                 width: '100vw',
                 minWidth: '100px',
                 height: '100vh',
@@ -93,7 +92,7 @@ const LogInFormContent: React.FC = () => {
                         paddingX: '50px',
                     }}
                 >
-                    <FormControl sx={{ padding: 1, marginX: theme.spacing(5) }}>
+                    <FormControl sx={{ padding: 1 }} margin="normal">
                         <FormLabel
                             id="email-label" // Added ID
                             sx={{ color: 'black', fontWeight: 'bold' }}
@@ -107,7 +106,7 @@ const LogInFormContent: React.FC = () => {
                             onChange={(e) => SetPassword(e.target.value)}
                         />
                         <Typography
-                            color={theme.palette.text.primary}
+                            color="primary"
                         >
                             <Link href={'#'} underline="hover">
                                 Forgot your password?
@@ -124,18 +123,19 @@ const LogInFormContent: React.FC = () => {
                                 marginTop: 2,
                                 backgroundColor: (theme) => theme.palette.primary.dark
                             }}
-                            onClick={async () => { 
+                            onClick={async () => {
                                 await handleLogin(username, password)
                                 SetIsSignInLoading(false);
-                                
-                             }}
+
+                            }}
                         >
                             {isLogInLoading ? "Signing In..." : "Sign In"}
                         </Button>
 
                     </FormControl>
 
-                    <FormControl sx={{ marginX: theme.spacing(5), marginTop: theme.spacing(3) }}>
+                    <FormControl margin="dense"
+                    >
                         <FormLabel sx={{ color: 'black', fontWeight: 'bold', marginBottom: 1, fontSize: '15px' }}>
                             Sign In With SSO
                         </FormLabel>
@@ -149,10 +149,10 @@ const LogInFormContent: React.FC = () => {
                                         height: "20px",
                                         width: "20px",
                                         justifySelf: 'flex-start',
-                                        alignSelf:'flex-start',
+                                        alignSelf: 'flex-start',
                                         paddingTop: 5,
                                         paddingBottom: 5,
-                                        
+
                                     }}
                                 />
                             }
@@ -180,7 +180,10 @@ const LogInFormContent: React.FC = () => {
                         </Button>
 
                     </FormControl>
-                    <FormControl sx={{ margin: theme.spacing(5), marginTop: 1 }}>
+                    <FormControl 
+                    margin='normal'
+                    // {{ margin: theme.spacing(5), marginTop: 1 }}
+                    >
                         <FormLabel sx={{ color: 'black', fontWeight: 'bold', marginBottom: 1, fontSize: '15px' }}>
                             Sign In With Card Compliant
                         </FormLabel>
@@ -259,13 +262,11 @@ const LoginPage: React.FC = () => {
         checkLoginStatus();
     }, [])
 
-    if(isUserLoggedIn === true)
-    {
-        return <Navigate to="/home" replace/>;
+    if (isUserLoggedIn === true) {
+        return <Navigate to="/home" replace />;
     }
-    if (isLoading)
-    {
-        return <LoadingComponent/>
+    if (isLoading) {
+        return <LoadingComponent />
     }
     return (<LogInFormContent />);
 }

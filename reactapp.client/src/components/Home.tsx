@@ -125,6 +125,7 @@ export default function DashboardLayoutBasic() {
         }
         checkLoginStatus();
     }, [])
+    
     if (isLoading) {
         return <LoadingComponent />;
     }
@@ -133,10 +134,11 @@ export default function DashboardLayoutBasic() {
         return <Navigate to="/login" replace />
     }
 
-   
+
     return (
         <ReactRouterAppProvider navigation={NAVIGATION}>
-            <Layout/>
+            <Layout />
         </ReactRouterAppProvider>
+
     );
 }
