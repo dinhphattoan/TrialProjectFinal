@@ -12,16 +12,18 @@ using ReactApp.Server.Data;
 using ReactApp.Server.DTO;
 using ReactApp.Server.Entity;
 using ReactApp.Server.Repository;
+using ReactApp.Server.Services.Interface;
 
 namespace ReactApp.Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class GlossariesController(GlossaryRepository glossaryRepository,
+    [Authorize(Roles ="User")]
+    public class GlossariesController(IGlossaryService glossaryService,
         ILogger<GlossariesController> logger,
         UserManager<IdentityUser> userManager) : ControllerBase
     {
-        private readonly GlossaryRepository _glossaryRepository = glossaryRepository;
+        private readonly IGlossaryService _glossaryService = glossaryService;
         private readonly ILogger<GlossariesController> _logger = logger;
         private readonly UserManager<IdentityUser> _userManager = userManager;
 
@@ -30,42 +32,33 @@ namespace ReactApp.Server.Controllers
         {
             try
             {
-                IEnumerable<Glossary> glossaries = await _glossaryRepository
-                    .GetGlossariesAtRangeOrderByTermOfPhrase(startIndex, count);
-                return Ok(glossaries);
+                IEnumerable<Glossary> glossaries = await _glossaryService.GetGlossariesByRange(startIndex, count);
+                int totalCount = await _glossaryService.@int();
+                return Ok(new { total = totalCount, data = glossaries });
             }
-            catch (InvalidOperationException e)
+            catch (InvalidOperationException ex)
             {
-                _logger.LogError("Error on GetGlossariesAtRange with {Message}", e.Message);
-                return Ok(Enumerable.Empty<Glossary>());
+                _logger.LogError(ex, "Invalid operation on GetGlossariesAtRange: {Message}", ex.Message);
+                return StatusCode(500, "An internal server error occurred due to an invalid operation.");
             }
-        }
-        [HttpGet("totalcount")]
-        public async Task<ActionResult<int>> GetTotalCountAsync()
-        {
-            return await _glossaryRepository.GetTotalGlossaryAsync();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error on GetGlossariesAtRange: {Message}", ex.Message);
+                return StatusCode(500, "An internal server error occurred.");
+            }
         }
         [HttpGet("search")]
-        public async Task<ActionResult<IEnumerable<Glossary>>> SearchGlossaries([FromQuery] string value)
+        public async Task<ActionResult<IEnumerable<Glossary>>> SearchGlossaries([FromQuery] string search, [FromQuery] int startIndex = 0, [FromQuery] int count =80)
         {
             try
             {
+                if(count==0)
+                {
+                    IEnumerable<Glossary> glossaries = await _glossaryService.GetGlossariesBySearchAsync(search);
+                    return Ok(glossaries);
+                }
                 IEnumerable<Glossary> glossaries = await _glossaryRepository.GetGlossaryByStringSearch(value);
                 return Ok(glossaries);
-            }
-            catch (InvalidOperationException e)
-            {
-                _logger.LogError("Error on SearchGlossaries with {Message}", e.Message);
-                return Ok(Enumerable.Empty<Glossary>());
-            }
-        }
-        [HttpGet("search/index/")]
-        public async Task<ActionResult<IEnumerable<Glossary>>> SearchGlossaries([FromQuery] string value, [FromQuery] int index, [FromQuery] int count)
-        {
-            try
-            {
-                IEnumerable<Glossary> glossaries = await _glossaryRepository.GetGlossaryByStringSearch(value);
-                return Ok(glossaries.Skip(index).Take(count).OrderBy(p=>p.TermOfPhrase));
             }
             catch (InvalidOperationException e)
             {

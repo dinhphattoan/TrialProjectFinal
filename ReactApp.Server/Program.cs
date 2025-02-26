@@ -34,7 +34,7 @@ builder.Services.AddCors(options =>
                .AllowCredentials(); 
     });
 });
-builder.Services.AddScoped<GlossaryRepository>();
+builder.Services.AddScoped<SQLGlossaryRepository>();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

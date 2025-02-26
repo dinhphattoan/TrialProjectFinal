@@ -39,59 +39,57 @@ namespace ReactApp1.Server.Data
                 UserManager<IdentityUser> userManager = provider.GetRequiredService<UserManager<IdentityUser>>();
                 ApplicationDbContext dbContext = provider.GetRequiredService<ApplicationDbContext>();
 
-                if (dbContext.Glossaries.Any())
+                var glossaries = await dbContext.Glossaries.ToListAsync();
+                dbContext.Glossaries.RemoveRange(glossaries);
+
+                try
                 {
-                    var glossaries = await dbContext.Glossaries.ToListAsync();
-                    dbContext.Glossaries.RemoveRange(glossaries);
-
-                    try
+                    using (FileStream fs = new FileStream(fileGlossaryRecordPath, FileMode.Open, FileAccess.Read))
                     {
-                        using (FileStream fs = new FileStream(fileGlossaryRecordPath, FileMode.Open, FileAccess.Read))
+                        IdentityUser? identityUser = await userManager.Users.FirstOrDefaultAsync();
+                        if (identityUser == null)
                         {
-                            IdentityUser? identityUser = await userManager.Users.FirstOrDefaultAsync();
-                            if (identityUser == null)
-                            {
-                                logger.LogWarning("No user found in the database.");
-                                return;
-                            }
-
-                            byte[] bytes = new byte[fs.Length];
-                            await fs.ReadExactlyAsync(bytes); 
-                            string readText = Encoding.UTF8.GetString(bytes);
-                            string[] stringLines = readText.Split('\n');
-
-                            for(int i =1;i<stringLines.Length;i++ )
-                            {
-                                string[] stringParts = stringLines[i].Split(':');
-                                if (stringParts.Length == 2 && !string.IsNullOrEmpty(stringParts[0]) && !string.IsNullOrEmpty(stringParts[1]))
-                                {
-                                    var newGlossary = new Glossary(Guid.NewGuid(), stringParts[0], stringParts[1].Trim(), DateTime.UtcNow)
-                                    {
-                                        UserCreatedBy = identityUser
-                                    };
-                                    await dbContext.Glossaries.AddAsync(newGlossary);
-                                }
-                                else
-                                {
-                                    logger.LogWarning($"Invalid line format: {stringLines[i]}");
-                                }
-                            }
+                            logger.LogWarning("No user found in the database.");
+                            return;
                         }
 
-                        await dbContext.SaveChangesAsync();
+                        byte[] bytes = new byte[fs.Length];
+                        await fs.ReadExactlyAsync(bytes);
+                        string readText = Encoding.UTF8.GetString(bytes);
+                        string[] stringLines = readText.Split('\n');
+
+                        for (int i = 1; i < stringLines.Length; i++)
+                        {
+                            string[] stringParts = stringLines[i].Split(':');
+                            if (stringParts.Length == 2 && !string.IsNullOrEmpty(stringParts[0]) && !string.IsNullOrEmpty(stringParts[1]))
+                            {
+                                var newGlossary = new Glossary(Guid.NewGuid(), stringParts[0], stringParts[1].Trim(), DateTime.UtcNow)
+                                {
+                                    UserCreatedBy = identityUser
+                                };
+                                await dbContext.Glossaries.AddAsync(newGlossary);
+                            }
+                            else
+                            {
+                                logger.LogWarning($"Invalid line format: {stringLines[i]}");
+                            }
+                        }
                     }
-                    catch (FileNotFoundException ex)
-                    {
-                        logger.LogError(ex, "File not found.");
-                    }
-                    catch (IOException ex)
-                    {
-                        logger.LogError(ex, "Error reading from file.");
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogError(ex, "An unexpected error occurred during glossary initialization.");
-                    }
+
+                    await dbContext.SaveChangesAsync();
+                }
+                catch (FileNotFoundException ex)
+                {
+                    logger.LogError(ex, "File not found.");
+                }
+                catch (IOException ex)
+                {
+                    logger.LogError(ex, "Error reading from file.");
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "An unexpected error occurred during glossary initialization.");
+
                 }
             }
         }

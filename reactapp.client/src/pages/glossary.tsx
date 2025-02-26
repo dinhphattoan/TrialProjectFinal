@@ -1,7 +1,7 @@
 import React from "react";
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Link from '@mui/material/Link';
-import { Box, Button, ButtonGroup, Card, CardContent, CardMedia, CircularProgress, Divider, Icon, IconButton, Modal, Paper, Skeleton, Stack, TextField, Typography } from "@mui/material";
+import { Alert, AlertTitle, Box, Button, ButtonGroup, Card, CardContent, CardMedia, CircularProgress, Divider, Icon, IconButton, Modal, Paper, Skeleton, Stack, TextField, Typography } from "@mui/material";
 import Grid from '@mui/material/Grid2';
 import CreateIcon from '@mui/icons-material/Create';
 import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
@@ -161,11 +161,11 @@ const GlossaryPage: React.FC = () => {
     const [searchResultValue, SetSearchResultValue] = React.useState<string>("");
 
     const [openModel, SetOpenModel] = React.useState<boolean>(false);
-    const [modalSubmitCreateResult, SetModalSubmitCreateResult] = React.useState<{submitResult: boolean, labelMessage: string} | null>(null);
+    const [modalSubmitCreateResult, SetModalSubmitCreateResult] = React.useState<{ submitResult: boolean, labelMessage: string } | null>(null);
     const [inputAddTermOfPhrase, SetInputAddTermOfPhraseValue] = React.useState<string>("");
     const [inputAddGlossaryExplainationValue, SetInputAddGlossaryExplainationValue] = React.useState<string>("");
-    const [isInCreatingGlossary,SetIsInCreatingGlossary] = React.useState<boolean>(false);
-    
+    const [isInCreatingGlossary, SetIsInCreatingGlossary] = React.useState<boolean>(false);
+
 
     const AddGlossaryModalOpen = () => SetOpenModel(true);
     const AddGlossaryModalClose = () => {
@@ -225,13 +225,13 @@ const GlossaryPage: React.FC = () => {
                 AddGlossaryModalClose();
                 retrieveGlossaryRecords(false);
             }
-            SetModalSubmitCreateResult({submitResult: true, labelMessage: "Successfully Create Glossary Record."});
+            SetModalSubmitCreateResult({ submitResult: true, labelMessage: "Successfully Create Glossary Record." });
         }
         catch (error) {
             console.error("Error Create Glossary Record.", error);
-            SetModalSubmitCreateResult({submitResult: false, labelMessage: "Error Create Glossary Record."});
+            SetModalSubmitCreateResult({ submitResult: false, labelMessage: "Error Create Glossary Record." });
         }
-        finally{
+        finally {
             SetIsInCreatingGlossary(false);
         }
     }
@@ -510,7 +510,7 @@ const GlossaryPage: React.FC = () => {
                                     }}
                                     value={inputAddTermOfPhrase}
                                     error={inputAddTermOfPhrase.length > 50
-                                        || (modalSubmitCreateResult !==null && !modalSubmitCreateResult.submitResult)
+                                        || (modalSubmitCreateResult !== null && !modalSubmitCreateResult.submitResult)
                                     }
                                 />
                                 <TextField multiline
@@ -519,7 +519,7 @@ const GlossaryPage: React.FC = () => {
                                         SetInputAddGlossaryExplainationValue(e.target.value);
                                     }}
                                     error={inputAddGlossaryExplainationValue.length > 500
-                                        || (modalSubmitCreateResult !==null && !modalSubmitCreateResult.submitResult)
+                                        || (modalSubmitCreateResult !== null && !modalSubmitCreateResult.submitResult)
                                     }
                                     inputMode="text"
                                     label="Glossary Explaination *"
@@ -532,17 +532,19 @@ const GlossaryPage: React.FC = () => {
                             </Stack>
                             <Divider />
                             <Stack spacing={2} marginTop={2} direction={'row-reverse'}>
-                            <Button onClick={
-                                handleAddGlossaryTerm
-                            } disabled={inputAddTermOfPhrase.length === 0 || inputAddGlossaryExplainationValue.length === 0} size="medium" variant="contained" color="primary" sx={{ borderRadius: '20px' }} >
-                                {isInCreatingGlossary? <CircularProgress size={'25px'}/>:
-                                'Submit'}
+                                <Button onClick={
+                                    handleAddGlossaryTerm
+                                } disabled={
+                                    (inputAddTermOfPhrase.length === 0 || inputAddGlossaryExplainationValue.length === 0)
+                                } size="medium" variant="contained" color="primary" sx={{ borderRadius: '20px' }} >
+                                    {isInCreatingGlossary ? <CircularProgress size={'25px'} /> :
+                                        'Submit'}
                                 </Button>
                                 <Button size="medium" onClick={AddGlossaryModalClose} variant="contained" color="secondary" sx={{ borderRadius: '20px' }}>Cancel</Button>
                             </Stack>
                             {modalSubmitCreateResult && (
-                                <Typography color={modalSubmitCreateResult.submitResult ? 'success' : 'error'} 
-                                textAlign={'end'} paddingRight={1} marginTop={1} fontSize={"12px"}>{modalSubmitCreateResult.labelMessage}</Typography>
+                                <Typography color={modalSubmitCreateResult.submitResult ? 'success' : 'error'}
+                                    textAlign={'end'} paddingRight={1} marginTop={1} fontSize={"12px"}>{modalSubmitCreateResult.labelMessage}</Typography>
                             )}
                         </Box>
                     </CardContent>
