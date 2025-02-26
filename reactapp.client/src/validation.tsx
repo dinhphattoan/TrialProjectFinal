@@ -1,4 +1,4 @@
-const UserSessionValidation = async (): Promise<boolean> => {
+export const UserSessionValidation = async (): Promise<boolean> => {
   try {
     const response = await fetch('/api/Accounts/authenticated', {
       method: 'GET',
@@ -13,20 +13,83 @@ const UserSessionValidation = async (): Promise<boolean> => {
         const errorMesssage = errorData.message || 'Unauthorized';
         throw new Error(errorMesssage);
       }
-      if (response.status === 400) {
-        return false;
-      }
       return false;
     }
     return true;
 
   }
-  catch (e: any) {
-    console.error("Login Check Error", e);
-    alert(`Error checking login status ${e.message}`);
+  catch (e) {
+    if (e instanceof Error) {
+      console.error("Login Check Error", e);
+      alert(`Error checking login status ${e.message}`);
+    }
+
     return false;
   }
 }
+export const GetResponseServerAPI = async (url: string): Promise<Response> => {
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include'
+    });
+    if (!response.ok) {
+      let errorMessage = `HTTP error! status: ${response.status}`;
+      let errorData;
+      try {
+        errorData = await response.json();
+        if (errorData && errorData.message) {
+          errorMessage += ` - ${errorData.message}`;
+        }
+      } catch (jsonError) {
+        // console.error("Error parsing JSON:", jsonError);
+      }
+      // console.error(errorMessage);
+      throw new Error(errorMessage);
+    }
 
+    return response;
+  }
+  catch (error) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      throw new Error("Network error. Please check your connection.");
+    }
+    throw error;
+  }
+}
 
-export default UserSessionValidation;
+export const PostResponseServerAPI = async (url: string, data: any, options?: RequestInit): Promise<Response> => {
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) {
+      let errorMessage = `HTTP error! status: ${response.status}`;
+      let errorData;
+
+      try {
+        errorData = await response.json();
+        if (errorData && errorData.message) {
+          errorMessage += ` - ${errorData.message}`;
+        }
+      } catch (jsonError) {
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response;
+  } catch (error) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      throw new Error("Network error. Please check your connection.");
+    }
+    throw error;
+  }
+}

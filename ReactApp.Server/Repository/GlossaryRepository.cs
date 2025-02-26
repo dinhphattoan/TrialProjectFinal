@@ -6,6 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.ComponentModel;
 
 namespace ReactApp.Server.Repository
 {
@@ -64,7 +67,44 @@ namespace ReactApp.Server.Repository
                 _logger.LogError(ex, "Error occurred while searching glossaries with search term: {SearchTerm}.", search);
                 return Enumerable.Empty<Glossary>();
             }
+
+        }
+        public async Task<int> GetTotalGlossaryAsync()
+        {
+            return await _dbContext.Glossaries.CountAsync();
+        }
+        public async Task<IEnumerable<Glossary>> GetGlossariesAtRangeOrderByTermOfPhrase(int startIndex, int length)
+        {
+            return await _dbContext.Glossaries
+        .OrderBy(g => g.TermOfPhrase)
+        .Skip(startIndex)
+        .Take(length)
+        .AsNoTracking().ToListAsync();
+        }
+        public IAsyncEnumerable<Glossary> GetTotalGlossaries()
+        {
+            return _dbContext.Glossaries.AsNoTracking().AsAsyncEnumerable();
+        }
+        
+        public async Task<bool> AddNewGlossaryAsync(Glossary glossary)
+        {
+            try
+            {
+                
+                await _dbContext.Glossaries.AddAsync(glossary);
+                await _dbContext.SaveChangesAsync();
+                return true;
+            }
+            catch(InvalidOperationException ex)
+            {
+                _logger.LogError(ex, "Error occurred while adding new glossary in AddNewGlossaryAsync.");
+                return false;
+            }
             
+        }
+        public async Task<bool> CheckTermOfPhraseExist(Glossary glossary)
+        {
+            return await _dbContext.Glossaries.AnyAsync(g => g.TermOfPhrase == glossary.TermOfPhrase);
         }
     }
 }

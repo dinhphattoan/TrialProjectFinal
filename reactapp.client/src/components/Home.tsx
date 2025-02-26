@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Navigation } from '@toolpad/core/AppProvider';
-import UserSessionValidation from '../validation';
+import {UserSessionValidation} from '../validation';
 import { Navigate } from 'react-router-dom';
 import LoadingComponent from './Loading';
 import { ReactRouterAppProvider } from '@toolpad/core/react-router';

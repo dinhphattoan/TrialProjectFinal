@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './components/Login';
-import UserSessionValidation from './validation';
+import {UserSessionValidation} from './validation';
 import React from 'react';
 import LoadingComponent from './components/Loading';
 import HomePage from './components/Home';

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using ReactApp.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using ReactApp1.Server.Data;
+using ReactApp.Server.Repository;
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultString"); 
@@ -33,7 +34,7 @@ builder.Services.AddCors(options =>
                .AllowCredentials(); 
     });
 });
-
+builder.Services.AddScoped<GlossaryRepository>();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

@@ -4,7 +4,7 @@ import homeLogoImage from '../assets/mainlogo.png'
 import microsoftIcon from '../assets/icons8-microsoft-48.png';
 import { Navigate, useNavigate } from 'react-router-dom';
 import LoadingComponent from './Loading';
-import UserSessionValidation from '../validation';
+import {UserSessionValidation} from '../validation';
 
 const LogInFormContent: React.FC = () => {
     const [username, SetUsername] = React.useState<string>("");

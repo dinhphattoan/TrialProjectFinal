@@ -9,3 +9,23 @@ Slated for Non-Escheat: The part of the total card payable balance that is not e
 Slope-Determined Breakage: A measure of breakage showing, for practical purposes, the amount of breakage that can be expected, using the balance as a percent of load, when the balance almost completely stops decreasing over time. Defined as the estimated percent balance for the month of age when the month-to-month decrease in redemption is less than a specified parameter. Stale Card Recapture Rate – Current Month: A measure in an applicable month of the amount of redemptions which occurred on cards which have passed their Amortization Period.
 Tax Deferral Period: The number of fiscal years, as set by Client, by which stated earnings can be delayed for tax purposes. The current choices for deferral are none, one year, or two years.
 Terminal Breakage: A measure of breakage that is the forecasted percentage of the card loads that likely will not be redeemed subject to standard deviations, which measure is determined as the asymptotic limit of the estimated balance by month of age as the age gets statistically large.
+Customer Activation Lag: The time elapsed, measured in days or weeks, between a customer's initial account creation and their first transaction or meaningful engagement.
+Churn Risk Score: A numerical value assigned to each customer, predicting the likelihood of them discontinuing their service or product subscription within a defined period.
+Inventory Velocity: The rate at which inventory is sold and replenished, measured in units or value per unit of time.
+Operational Throughput: The maximum rate at which a process or system can produce output, measured in units or transactions per unit of time.
+Compliance Audit Trail: A chronological record of all actions and changes made within a system or process, ensuring traceability and accountability for compliance purposes.
+Demand Forecast Variance: The difference between the forecasted demand for a product or service and the actual demand realized, expressed as a percentage or absolute value.
+Service Level Agreement (SLA) Adherence: The percentage of service requests or incidents that are resolved within the agreed-upon timeframes specified in the SLA.
+Cost of Customer Acquisition (CAC) Payback Period: The time required for a customer to generate enough revenue to cover the cost of acquiring them, measured in months or years.
+Data Integrity Index: A composite metric that measures the accuracy, completeness, and consistency of data within a system or database.
+Predictive Maintenance Index: A metric that combines data from sensors and historical performance to predict when equipment or machinery will require maintenance.
+Customer Lifetime Value (CLTV): A prediction of the net profit attributed to the entire future relationship with a customer.
+First Contact Resolution (FCR): The percentage of customer issues resolved during the first interaction.
+Net Promoter Score (NPS): A customer loyalty metric based on how likely customers are to recommend a company's products or services.
+Employee Turnover Rate: The percentage of employees who leave a company within a specific period.
+Lead Conversion Rate: The percentage of leads that convert into paying customers.
+Market Share: The percentage of a market controlled by a specific company or product.
+Return on Investment (ROI): A measure of the profitability of an investment.
+Website Bounce Rate: The percentage of visitors who leave a website after viewing only one page.
+Average Order Value (AOV): The average amount spent by customers per order.
+Days Sales Outstanding (DSO): The average number of days it takes a company to collect payment after a sale.
