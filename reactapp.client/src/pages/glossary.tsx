@@ -161,16 +161,17 @@ const GlossaryPage: React.FC = () => {
     const [searchResultValue, SetSearchResultValue] = React.useState<string>("");
 
     const [openModel, SetOpenModel] = React.useState<boolean>(false);
-    const [modalErrorResult, SetModalErrorResult] = React.useState<string>("");
-    const [termOfPhraseAdd, SetTermOfPhraseAdd] = React.useState<string>("");
-    const [glossaryExplainationAdd, SetGlossaryExplainationAdd] = React.useState<string>("");
-    const [isCreatingGlossary,SetIsCreatingGlossary] = React.useState<boolean>(false);
+    const [modalSubmitCreateResult, SetModalSubmitCreateResult] = React.useState<{submitResult: boolean, labelMessage: string} | null>(null);
+    const [inputAddTermOfPhrase, SetInputAddTermOfPhraseValue] = React.useState<string>("");
+    const [inputAddGlossaryExplainationValue, SetInputAddGlossaryExplainationValue] = React.useState<string>("");
+    const [isInCreatingGlossary,SetIsInCreatingGlossary] = React.useState<boolean>(false);
     
+
     const AddGlossaryModalOpen = () => SetOpenModel(true);
     const AddGlossaryModalClose = () => {
         SetOpenModel(false);
-        SetTermOfPhraseAdd("");
-        SetGlossaryExplainationAdd("");
+        SetInputAddTermOfPhraseValue("");
+        SetInputAddGlossaryExplainationValue("");
     };
 
     const retrieveGlossaryRecords = async (searchMode: boolean) => {
@@ -214,24 +215,24 @@ const GlossaryPage: React.FC = () => {
         }
 
     }
-    const addGlossaryTerm = async () => {
+    const handleAddGlossaryTerm = async () => {
         try {
-            SetModalErrorResult("");
-            SetIsCreatingGlossary(true);
+            SetModalSubmitCreateResult(null);
+            SetIsInCreatingGlossary(true);
             const response = await PostResponseServerAPI("/api/Glossaries/add",
-                { termOfPhrase: termOfPhraseAdd, "explaination": glossaryExplainationAdd });
+                { termOfPhrase: inputAddTermOfPhrase, "explaination": inputAddGlossaryExplainationValue });
             if (!response.ok) {
                 AddGlossaryModalClose();
                 retrieveGlossaryRecords(false);
             }
-            SetModalErrorResult("created");
+            SetModalSubmitCreateResult({submitResult: true, labelMessage: "Successfully Create Glossary Record."});
         }
         catch (error) {
             console.error("Error Create Glossary Record.", error);
-            SetModalErrorResult("Internal server error");
+            SetModalSubmitCreateResult({submitResult: false, labelMessage: "Error Create Glossary Record."});
         }
         finally{
-            SetIsCreatingGlossary(false);
+            SetIsInCreatingGlossary(false);
         }
     }
     let totalRecordPerPage: number = 8;
@@ -503,28 +504,28 @@ const GlossaryPage: React.FC = () => {
                             <Divider />
                             <Stack marginTop={3} spacing={3}>
                                 <TextField label="Term or Phrase *"
-                                    helperText={`${termOfPhraseAdd.length}/50`}
+                                    helperText={`${inputAddTermOfPhrase.length}/50`}
                                     onChange={(e) => {
-                                        SetTermOfPhraseAdd(e.target.value);
+                                        SetInputAddTermOfPhraseValue(e.target.value);
                                     }}
-                                    value={termOfPhraseAdd}
-                                    error={termOfPhraseAdd.length > 50
-                                        || modalErrorResult.length > 0
+                                    value={inputAddTermOfPhrase}
+                                    error={inputAddTermOfPhrase.length > 50
+                                        || (modalSubmitCreateResult !==null && !modalSubmitCreateResult.submitResult)
                                     }
                                 />
                                 <TextField multiline
-                                    helperText={`${glossaryExplainationAdd.length}/500`}
+                                    helperText={`${inputAddGlossaryExplainationValue.length}/500`}
                                     onChange={(e) => {
-                                        SetGlossaryExplainationAdd(e.target.value);
+                                        SetInputAddGlossaryExplainationValue(e.target.value);
                                     }}
-                                    error={glossaryExplainationAdd.length > 500
-                                        || modalErrorResult.length > 0
+                                    error={inputAddGlossaryExplainationValue.length > 500
+                                        || (modalSubmitCreateResult !==null && !modalSubmitCreateResult.submitResult)
                                     }
                                     inputMode="text"
                                     label="Glossary Explaination *"
                                     aria-label="Glossary Explaination Input"
                                     sx={{ "& .MuiInputBase-input": { minHeight: "150px" } }}
-                                    value={glossaryExplainationAdd}
+                                    value={inputAddGlossaryExplainationValue}
                                 />
 
 
@@ -532,15 +533,17 @@ const GlossaryPage: React.FC = () => {
                             <Divider />
                             <Stack spacing={2} marginTop={2} direction={'row-reverse'}>
                             <Button onClick={
-                                addGlossaryTerm
-                            } disabled={termOfPhraseAdd.length === 0 || glossaryExplainationAdd.length === 0} size="medium" variant="contained" color="primary" sx={{ borderRadius: '20px' }} >
-                                {isCreatingGlossary? <CircularProgress size={'25px'}/>:
+                                handleAddGlossaryTerm
+                            } disabled={inputAddTermOfPhrase.length === 0 || inputAddGlossaryExplainationValue.length === 0} size="medium" variant="contained" color="primary" sx={{ borderRadius: '20px' }} >
+                                {isInCreatingGlossary? <CircularProgress size={'25px'}/>:
                                 'Submit'}
                                 </Button>
                                 <Button size="medium" onClick={AddGlossaryModalClose} variant="contained" color="secondary" sx={{ borderRadius: '20px' }}>Cancel</Button>
                             </Stack>
-                            <Typography color={modalErrorResult===""?'success': 'error'} 
-                            textAlign={'end'} paddingRight={1} marginTop={1} fontSize={"12px"}>{modalErrorResult}</Typography>
+                            {modalSubmitCreateResult && (
+                                <Typography color={modalSubmitCreateResult.submitResult ? 'success' : 'error'} 
+                                textAlign={'end'} paddingRight={1} marginTop={1} fontSize={"12px"}>{modalSubmitCreateResult.labelMessage}</Typography>
+                            )}
                         </Box>
                     </CardContent>
                 </Card>

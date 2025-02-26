@@ -17,7 +17,8 @@ namespace ReactApp.Server.Data
         {
             base.OnModelCreating(builder);
             builder.Entity<IdentityUser>().HasMany<Glossary>().WithOne(p=>p.UserCreatedBy);
-
+            builder.Entity<Glossary>().HasKey(p => p.Guid);
+            builder.Entity<Glossary>().HasIndex(p => p.TermOfPhrase).IsUnique();
         }
     }
 }

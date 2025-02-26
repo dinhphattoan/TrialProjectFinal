@@ -10,7 +10,6 @@ namespace ReactApp.Server.Entity
         public Guid Guid { get; set; }
         [Required]
         [MaxLength(50)]
-
         public string TermOfPhrase { get; set; }
         [Required]
         [MaxLength(500)]
@@ -27,8 +26,12 @@ namespace ReactApp.Server.Entity
             GlossaryExplaination = glossaryExplaination;
             DateAdded = dateAdded;
         }
-        public Glossary()
+        public Glossary(string termOfPhrase, string glossaryExplaination)
         {
+            Guid = Guid.NewGuid(); 
+            TermOfPhrase = termOfPhrase;
+            GlossaryExplaination = glossaryExplaination;
+            DateAdded = DateTime.UtcNow; 
         }
     }
 }

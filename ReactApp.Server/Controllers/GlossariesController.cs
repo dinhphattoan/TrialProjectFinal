@@ -106,12 +106,8 @@ namespace ReactApp.Server.Controllers
         {
             try
             {
-                Glossary glossary = new Glossary()
+                Glossary glossary = new Glossary(createDTO.TermOfPhrase,createDTO.Explaination)
                 {
-                    Guid = Guid.NewGuid(),
-                    TermOfPhrase = createDTO.TermOfPhrase,
-                    GlossaryExplaination = createDTO.Explaination,
-                    DateAdded = DateTime.Now,
                     UserCreatedBy = _userManager.GetUserAsync(User).Result
                 };
                 if (!await _glossaryRepository.AddNewGlossaryAsync(glossary))
@@ -126,69 +122,5 @@ namespace ReactApp.Server.Controllers
                 return BadRequest();
             }
         }
-
-
-        //// PUT: api/Glossaries/5
-        //// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        //[HttpPut("{id}")]
-        //public async Task<IActionResult> PutGlossary(Guid id, Glossary glossary)
-        //{
-        //    if (id != glossary.Guid)
-        //    {
-        //        return BadRequest();
-        //    }
-
-        //    _context.Entry(glossary).State = EntityState.Modified;
-
-        //    try
-        //    {
-        //        await _context.SaveChangesAsync();
-        //    }
-        //    catch (DbUpdateConcurrencyException)
-        //    {
-        //        if (!GlossaryExists(id))
-        //        {
-        //            return NotFound();
-        //        }
-        //        else
-        //        {
-        //            throw;
-        //        }
-        //    }
-
-        //    return NoContent();
-        //}
-
-        //// POST: api/Glossaries
-        //// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        //[HttpPost]
-        //public async Task<ActionResult<Glossary>> PostGlossary(Glossary glossary)
-        //{
-        //    _context.Glossaries.Add(glossary);
-        //    await _context.SaveChangesAsync();
-
-        //    return CreatedAtAction("GetGlossary", new { id = glossary.Guid }, glossary);
-        //}
-
-        //// DELETE: api/Glossaries/5
-        //[HttpDelete("{id}")]
-        //public async Task<IActionResult> DeleteGlossary(Guid id)
-        //{
-        //    var glossary = await _context.Glossaries.FindAsync(id);
-        //    if (glossary == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    _context.Glossaries.Remove(glossary);
-        //    await _context.SaveChangesAsync();
-
-        //    return NoContent();
-        //}
-
-        //private bool GlossaryExists(Guid id)
-        //{
-        //    return _context.Glossaries.Any(e => e.Guid == id);
-        //}
     }
 }

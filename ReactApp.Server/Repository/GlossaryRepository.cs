@@ -90,7 +90,6 @@ namespace ReactApp.Server.Repository
         {
             try
             {
-                
                 await _dbContext.Glossaries.AddAsync(glossary);
                 await _dbContext.SaveChangesAsync();
                 return true;
