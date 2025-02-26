@@ -13,12 +13,12 @@ using ReactApp.Server.Repository.Interface;
 
 namespace ReactApp.Server.Repository
 {
-    public class SQLGlossaryRepository : IGlossaryRepository
+    public class SQLGlossaryRepository : GenericRepository<Glossary>, IGlossaryRepository
     {
         private readonly ApplicationDbContext _dbContext;
         private readonly ILogger<SQLGlossaryRepository> _logger;
 
-        public SQLGlossaryRepository(ApplicationDbContext dbContext, ILogger<SQLGlossaryRepository> logger)
+        public SQLGlossaryRepository(ApplicationDbContext dbContext, ILogger<SQLGlossaryRepository> logger): base(dbContext)
         {
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -99,11 +99,39 @@ namespace ReactApp.Server.Repository
 
         public async Task<IEnumerable<Glossary>> SearchByTermAsync(string searchString, CancellationToken cancellationToken = default)
         {
+            if (string.IsNullOrEmpty(searchString))
+            {
+                return new List<Glossary>();
+            }
+
             return await _dbContext.Glossaries
                 .Where(g => g.TermOfPhrase.ToLower().Contains(searchString.ToLower()))
-                .OrderBy(g=>g.TermOfPhrase)
+                .OrderBy(g => g.TermOfPhrase)
                 .ToListAsync(cancellationToken);
         }
+
+        public async Task<(IEnumerable<Glossary> Items, int TotalCount)> SearchGlossariesPagedAsync(
+            string search, int startIndex, int count, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(search))
+            {
+                return (Enumerable.Empty<Glossary>(), 0);
+            }
+
+            var query = _dbContext.Glossaries
+                .Where(p => EF.Functions.Like(p.TermOfPhrase, $"%{search}%")); 
+
+            int totalCount = await query.CountAsync(cancellationToken);
+
+            var glossaries = await query
+                .OrderBy(p => p.TermOfPhrase)
+                .Skip(startIndex)
+                .Take(count)
+                .ToListAsync(cancellationToken);
+
+            return (glossaries, totalCount);
+        }
+
 
         public async Task<IEnumerable<Glossary>> GetGlossariesPagedAsync(int startIndex, int count, CancellationToken cancellationToken = default)
         {
@@ -111,21 +139,22 @@ namespace ReactApp.Server.Repository
                 .OrderBy(g => g.TermOfPhrase)
                 .Skip(startIndex)
                 .Take(count)
+                .AsNoTracking()
                 .ToListAsync(cancellationToken);
         }
 
-        public async Task<IEnumerable<Glossary>> SearchGlossariesPagedAsync(string search, int startIndex, int count, CancellationToken cancellationToken = default)
-        {
-            return await _dbContext.Glossaries
-                .Where(p=>p.TermOfPhrase.ToLower().Contains(search.ToLower()))
-                .Skip(startIndex)
-                .Take(count)
-                .ToListAsync(cancellationToken);
-        }
 
         public async Task<int> GetCountAsync(CancellationToken cancellationToken = default)
         {
             return await _dbContext.Glossaries.CountAsync(cancellationToken);
         }
+
+        public async Task<int> GetSearchCountAsync(string search, CancellationToken cancellationToken = default)
+        {
+            return await _dbContext.Glossaries
+                .Where(p => EF.Functions.Like(p.TermOfPhrase, search))
+                .CountAsync(cancellationToken);
+        }
+
     }
 }

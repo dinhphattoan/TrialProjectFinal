@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -18,7 +19,7 @@ namespace ReactApp.Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles ="User")]
+    [Authorize(Roles = "User")]
     public class GlossariesController(IGlossaryService glossaryService,
         ILogger<GlossariesController> logger,
         UserManager<IdentityUser> userManager) : ControllerBase
@@ -27,92 +28,62 @@ namespace ReactApp.Server.Controllers
         private readonly ILogger<GlossariesController> _logger = logger;
         private readonly UserManager<IdentityUser> _userManager = userManager;
 
-        [HttpGet("{startIndex}/{count}")]
-        public async Task<ActionResult<IEnumerable<Glossary>>> GetGlossariesAtRange(int startIndex, int count)
+        [HttpGet]
+        public async Task<ActionResult<GlossaryRecordResultDTO>> GetGlossariesByRange(
+            [FromQuery] int startIndex = 0,
+            [FromQuery] int count = 80,
+            [FromQuery] string search= "")
         {
             try
             {
-                IEnumerable<Glossary> glossaries = await _glossaryService.GetGlossariesByRange(startIndex, count);
-                int totalCount = await _glossaryService.@int();
-                return Ok(new { total = totalCount, data = glossaries });
+                return Ok(await _glossaryService.GetGlossariesByRangeAsync(startIndex, count, search));
             }
-            catch (InvalidOperationException ex)
+            catch(ArgumentException ex)
             {
-                _logger.LogError(ex, "Invalid operation on GetGlossariesAtRange: {Message}", ex.Message);
-                return StatusCode(500, "An internal server error occurred due to an invalid operation.");
+                _logger.LogWarning(ex, "Invalid parameters: search={Search}, startIndex={StartIndex}, count={Count}", search, startIndex, count);
+                return BadRequest(ex.Message);
+            }
+            catch(DbException ex)
+            {
+                _logger.LogError(ex, "Database error occurred while searching glossaries with search={Search}, startIndex={StartIndex}, count={Count}", search ?? "", startIndex, count);
+                return StatusCode(500, "An internal server error occurred.");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error on GetGlossariesAtRange: {Message}", ex.Message);
+                _logger.LogError(ex, "Unexpected error occurred while searching glossaries with search={Search}, startIndex={StartIndex}, count={Count}", search??"", startIndex, count);
                 return StatusCode(500, "An internal server error occurred.");
             }
         }
-        [HttpGet("search")]
-        public async Task<ActionResult<IEnumerable<Glossary>>> SearchGlossaries([FromQuery] string search, [FromQuery] int startIndex = 0, [FromQuery] int count =80)
-        {
-            try
-            {
-                if(count==0)
-                {
-                    IEnumerable<Glossary> glossaries = await _glossaryService.GetGlossariesBySearchAsync(search);
-                    return Ok(glossaries);
-                }
-                IEnumerable<Glossary> glossaries = await _glossaryRepository.GetGlossaryByStringSearch(value);
-                return Ok(glossaries);
-            }
-            catch (InvalidOperationException e)
-            {
-                _logger.LogError("Error on SearchGlossaries with {Message}", e.Message);
-                return Ok(Enumerable.Empty<Glossary>());
-            }
-        }
-        [HttpGet("search/total")]
-        public async Task<ActionResult<IEnumerable<Glossary>>> GetTotalSearchGlossary([FromQuery] string value)
-        {
-            try
-            {
-                IEnumerable<Glossary> glossaries = await _glossaryRepository.GetGlossaryByStringSearch(value);
-                return Ok(glossaries.Count());
-            }
-            catch (InvalidOperationException e)
-            {
-                _logger.LogError("Error on GetTotalSearchGlossary with {Message}", e.Message);
-                return Ok(0);
-            }
-        }
 
-
-        [Authorize]
-        [HttpGet("current-user")]
-        public IActionResult GetCurrentUser()
-        {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value; 
-            var userName = User.Identity?.Name; 
-            var email = User.FindFirst(ClaimTypes.Email)?.Value; 
-
-            return Ok(new { UserId = userId, Username = userName, Email = email });
-        }
 
         [HttpPost("add")]
         [Authorize]
         public async Task<ActionResult> AddGlossaryAsync([FromBody] GlossaryCreateDTO createDTO)
         {
+            if(!ModelState.IsValid)
+            {
+                return BadRequest("Invalid argument");
+            }
             try
             {
-                Glossary glossary = new Glossary(createDTO.TermOfPhrase,createDTO.Explaination)
+                if(await _glossaryService.AddGlossariesAsync(createDTO, await _userManager.GetUserAsync(User), HttpContext.RequestAborted))
                 {
-                    UserCreatedBy = _userManager.GetUserAsync(User).Result
-                };
-                if (!await _glossaryRepository.AddNewGlossaryAsync(glossary))
-                {
-                    throw new Exception("Error on AddNewGlossaryAsync");
+                    return Created();
                 }
-                return Created();
+                else
+                {
+                    return StatusCode(500, "An internal server error occured.");
+                }
             }
-            catch (Exception e)
+            catch (DbException e)
             {
-                _logger.LogError(e, "Error on AddGlossaryAsync");
-                return BadRequest();
+                _logger.LogError(e, "Database error occured while add new glossary");
+                return StatusCode(500, "An interal server error occured.");
+            }
+            catch(Exception e)
+            {
+                _logger.LogError(e, "Unexpected error occured while add new glossary");
+                return StatusCode(500, "An internal server error occured.");
             }
         }
     }

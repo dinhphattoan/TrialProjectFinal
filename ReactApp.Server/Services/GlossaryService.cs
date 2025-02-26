@@ -1,7 +1,10 @@
-﻿using ReactApp.Server.Entity;
+﻿using Microsoft.AspNetCore.Identity;
+using ReactApp.Server.DTO;
+using ReactApp.Server.Entity;
 using ReactApp.Server.Repository.Interface;
 using ReactApp.Server.Services.Interface;
 using System.Data.Common;
+using System.Security.Claims;
 
 namespace ReactApp.Server.Services
 {
@@ -21,48 +24,65 @@ namespace ReactApp.Server.Services
             {
                 return await _glossaryRepository.GetAllAsync();
             }
-            catch(DbException ex)
+            catch (DbException ex)
             {
                 _logger.LogError(ex, "Database error occured while get all Glossaries in GetGlossariesAsync");
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected Error occured while get all Glossaries in GetGlossariesAsync");
             }
             return Enumerable.Empty<Glossary>();
         }
 
-        public async Task<IEnumerable<Glossary>> GetGlossariesByRange(int startIndex, int count, string search = "", CancellationToken cancellationToken = default)
+        public async Task<GlossaryRecordResultDTO> GetGlossariesByRangeAsync(int startIndex, int count, string search = "", CancellationToken cancellationToken = default)
         {
             try
             {
+                IEnumerable<Glossary> glossaries;
+                int totalCount;
                 if (string.IsNullOrEmpty(search))
                 {
-                    return await _glossaryRepository.GetGlossariesPagedAsync(startIndex, count,cancellationToken);
-                    
+                    glossaries = await _glossaryRepository.GetGlossariesPagedAsync(startIndex, count, cancellationToken);
+                    totalCount = await _glossaryRepository.GetCountAsync();
+                    return new GlossaryRecordResultDTO { total = totalCount, data = glossaries };
                 }
                 else
                 {
-                    return await _glossaryRepository.SearchGlossariesPagedAsync(search,startIndex,count, cancellationToken);
-                    
+                    var result = await _glossaryRepository.SearchGlossariesPagedAsync(search, startIndex, count, cancellationToken);
+                    return new GlossaryRecordResultDTO { total = result.TotalCount, data = result.Items };
                 }
             }
             catch (DbException ex)
             {
-                _logger.LogError(ex, $"Database error occured while get all Glossaries in GetGlossariesByRange: {startIndex}, {count}");
+                _logger.LogError(ex, $"Database error occured while get all Glossaries in GetGlossariesByRange (start index: {startIndex},count: {count},search: {search})");
+                throw;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected Error occured while get all Glossaries in GetGlossariesByRange");
+                _logger.LogError(ex, $"Unexpected Error occured while get all Glossaries in GetGlossariesByRange (start index: {startIndex},count: {count},search: {search})");
+                throw;
             }
-            return Enumerable.Empty<Glossary>();
         }
-        public async Task<IEnumerable<Glossary>> GetGlossariesBySearchAsync(string search,CancellationToken cancellationToken)
+        public async Task<bool> AddGlossariesAsync(GlossaryCreateDTO glossaryCreateDTO, IdentityUser identityUser, CancellationToken cancellation)
+        {
+            try
+            {
+                Glossary glossary = new Glossary(glossaryCreateDTO.TermOfPhrase, glossaryCreateDTO.Explaination, identityUser);
+                return await _glossaryRepository.AddAsync(glossary, cancellation);
+
+            }
+            catch(Exception)
+            {
+                throw;
+            }
+        }
+        public async Task<IEnumerable<Glossary>> GetGlossariesBySearchAsync(string search, CancellationToken cancellationToken)
         {
             try
             {
                 return await _glossaryRepository.SearchByTermAsync(search, cancellationToken);
-                
+
             }
             catch (DbException ex)
             {
@@ -93,7 +113,7 @@ namespace ReactApp.Server.Services
             }
             catch (DbException ex)
             {
-                _logger.LogError(ex,"Error occured while get all count");
+                _logger.LogError(ex, "Error occured while get all count");
             }
             catch (Exception ex)
             {

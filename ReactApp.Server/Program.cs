@@ -3,6 +3,9 @@ using ReactApp.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using ReactApp1.Server.Data;
 using ReactApp.Server.Repository;
+using ReactApp.Server.Services;
+using ReactApp.Server.Repository.Interface;
+using ReactApp.Server.Services.Interface;
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultString"); 
@@ -34,7 +37,8 @@ builder.Services.AddCors(options =>
                .AllowCredentials(); 
     });
 });
-builder.Services.AddScoped<SQLGlossaryRepository>();
+builder.Services.AddScoped<IGlossaryRepository,SQLGlossaryRepository>();
+builder.Services.AddScoped<IGlossaryService, GlossaryService>();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

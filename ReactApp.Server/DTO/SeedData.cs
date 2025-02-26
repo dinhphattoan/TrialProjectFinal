@@ -63,7 +63,7 @@ namespace ReactApp1.Server.Data
                             string[] stringParts = stringLines[i].Split(':');
                             if (stringParts.Length == 2 && !string.IsNullOrEmpty(stringParts[0]) && !string.IsNullOrEmpty(stringParts[1]))
                             {
-                                var newGlossary = new Glossary(Guid.NewGuid(), stringParts[0], stringParts[1].Trim(), DateTime.UtcNow)
+                                var newGlossary = new Glossary(Guid.NewGuid(), stringParts[0], stringParts[1].Trim(), DateTime.UtcNow, identityUser)
                                 {
                                     UserCreatedBy = identityUser
                                 };

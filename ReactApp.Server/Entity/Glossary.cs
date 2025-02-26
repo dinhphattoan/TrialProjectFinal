@@ -18,7 +18,13 @@ namespace ReactApp.Server.Entity
 
         //Nav
         public IdentityUser UserCreatedBy { get; set; }
-
+        public Glossary(string termOfPhrase, string glossaryExplaination)
+        {
+            Guid = Guid.NewGuid();
+            TermOfPhrase = termOfPhrase;
+            GlossaryExplaination = glossaryExplaination;
+            DateAdded = DateTime.UtcNow;
+        }
         public Glossary(Guid guid, string termOfPhrase, string glossaryExplaination, DateTime dateAdded, IdentityUser userCreatedBy)
         {
             Guid = guid;

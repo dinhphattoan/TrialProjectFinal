@@ -12,8 +12,9 @@ namespace ReactApp.Server.Repository.Interface
         public Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
         public Task<IEnumerable<Glossary>> GetAllAsync(CancellationToken cancellationToken = default);
         public Task<int> GetCountAsync(CancellationToken cancellationToken = default);
+        public Task<int> GetSearchCountAsync(string search, CancellationToken cancellationToken = default);
         public Task<IEnumerable<Glossary>> SearchByTermAsync(string search, CancellationToken cancellationToken = default);
         public Task<IEnumerable<Glossary>> GetGlossariesPagedAsync(int startIndex, int count, CancellationToken cancellationToken = default);
-        public Task<IEnumerable<Glossary>> SearchGlossariesPagedAsync(string search, int startIndex, int count, CancellationToken cancellationToken = default);
+        public Task<(IEnumerable<Glossary> Items, int TotalCount)> SearchGlossariesPagedAsync(string search, int startIndex, int count, CancellationToken cancellationToken = default);
     }
 }
