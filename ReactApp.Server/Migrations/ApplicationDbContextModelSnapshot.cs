@@ -222,9 +222,13 @@ namespace ReactApp.Server.Migrations
 
             modelBuilder.Entity("ReactApp.Server.Entity.Glossary", b =>
                 {
-                    b.Property<Guid>("Guid")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CreateById")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime>("DateAdded")
                         .HasColumnType("datetime2");
@@ -239,16 +243,12 @@ namespace ReactApp.Server.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("UserCreatedById")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.HasKey("Id");
 
-                    b.HasKey("Guid");
+                    b.HasIndex("CreateById");
 
                     b.HasIndex("TermOfPhrase")
                         .IsUnique();
-
-                    b.HasIndex("UserCreatedById");
 
                     b.ToTable("Glossaries");
                 });
@@ -308,7 +308,7 @@ namespace ReactApp.Server.Migrations
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "UserCreatedBy")
                         .WithMany()
-                        .HasForeignKey("UserCreatedById")
+                        .HasForeignKey("CreateById")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

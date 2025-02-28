@@ -63,8 +63,12 @@ namespace ReactApp1.Server.Data
                             string[] stringParts = stringLines[i].Split(':');
                             if (stringParts.Length == 2 && !string.IsNullOrEmpty(stringParts[0]) && !string.IsNullOrEmpty(stringParts[1]))
                             {
-                                var newGlossary = new Glossary(Guid.NewGuid(), stringParts[0], stringParts[1].Trim(), DateTime.UtcNow, identityUser)
+                                var newGlossary = new Glossary()
                                 {
+                                    Id = Guid.NewGuid(),
+                                    TermOfPhrase = stringParts[0],
+                                    GlossaryExplaination = stringParts[1],
+                                    DateAdded = DateTime.Now,
                                     UserCreatedBy = identityUser
                                 };
                                 await dbContext.Glossaries.AddAsync(newGlossary);

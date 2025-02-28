@@ -1,5 +1,12 @@
-﻿using Microsoft.AspNetCore.Identity;
-using ReactApp.Server.DTO;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using ReactApp.Server.Contracts.DTOs;
+using ReactApp.Server.Contracts.DTOs.Glossaries;
+using ReactApp.Server.Contracts.Exceptions;
+using ReactApp.Server.Contracts.Paginations;
+using ReactApp.Server.DTO.Glossary;
 using ReactApp.Server.Entity;
 using ReactApp.Server.Repository.Interface;
 using ReactApp.Server.Services.Interface;
@@ -8,118 +15,158 @@ using System.Security.Claims;
 
 namespace ReactApp.Server.Services
 {
-    public class GlossaryService : IGlossaryService
+    public class GlossaryService : BaseApplicationService, IGlossaryService
     {
-        private readonly IGlossaryRepository _glossaryRepository;
         private readonly ILogger<GlossaryService> _logger;
-        public GlossaryService(ILogger<GlossaryService> logger, IGlossaryRepository glossaryRepository)
+        private readonly IGenericRepository<Glossary,Guid> _glossaryRepository;
+        private readonly IMapper _mapper;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly UserManager<IdentityUser> _userManager;
+        public GlossaryService(ILogger<GlossaryService> logger, 
+            IGenericRepository<Glossary,Guid> glossaryRepository,
+            IMapper mapper, IHttpContextAccessor httpContextAccessor,
+            UserManager<IdentityUser> userManager) : base(logger, mapper)
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _glossaryRepository = glossaryRepository ?? throw new ArgumentNullException(nameof(glossaryRepository));
+            _logger = logger;
+            _glossaryRepository = glossaryRepository;
+            _mapper = mapper;
+            _httpContextAccessor = httpContextAccessor;
+            _userManager = userManager;
+        }
+        static async Task<bool> ExistGlossaryLocalAsync(IGenericRepository<Glossary, Guid> glossaryRepository, string termOfPhrase, Guid? id)
+        {
+            if (id is null)
+            {
+                return await glossaryRepository.AnyAsync(Glossary => Glossary.TermOfPhrase.Equals(termOfPhrase));
+            }
+            return await glossaryRepository.AnyAsync(g => g.Id != id && g.TermOfPhrase.Equals(termOfPhrase));
         }
 
-        public async Task<IEnumerable<Glossary>> GetGlossariesAsync(CancellationToken cancellationToken = default)
+        public async Task<ResultDto<Guid?>> AddGlossaryAsync(AddGlossaryDto createDTO, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                return await _glossaryRepository.GetAllAsync();
-            }
-            catch (DbException ex)
-            {
-                _logger.LogError(ex, "Database error occured while get all Glossaries in GetGlossariesAsync");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unexpected Error occured while get all Glossaries in GetGlossariesAsync");
-            }
-            return Enumerable.Empty<Glossary>();
-        }
 
-        public async Task<GlossaryRecordResultDTO> GetGlossariesByRangeAsync(int startIndex, int count, string search = "", CancellationToken cancellationToken = default)
-        {
+            ArgumentNullException.ThrowIfNull(createDTO);
+            var resultDto = new ResultDto<Guid?>();
             try
             {
-                IEnumerable<Glossary> glossaries;
-                int totalCount;
-                if (string.IsNullOrEmpty(search))
+                if (await ExistGlossaryLocalAsync(_glossaryRepository, createDTO.TermOfPhrase, null))
                 {
-                    glossaries = await _glossaryRepository.GetGlossariesPagedAsync(startIndex, count, cancellationToken);
-                    totalCount = await _glossaryRepository.GetCountAsync();
-                    return new GlossaryRecordResultDTO { total = totalCount, data = glossaries };
+                    resultDto.Message.Add("Term Phase name already exist");
+                    return resultDto;
                 }
-                else
+                Glossary glossary = Mapper.Map<Glossary>(createDTO);
+                var user = _httpContextAccessor.HttpContext?.User;
+                if (user == null)
                 {
-                    var result = await _glossaryRepository.SearchGlossariesPagedAsync(search, startIndex, count, cancellationToken);
-                    return new GlossaryRecordResultDTO { total = result.TotalCount, data = result.Items };
+                    resultDto.Message.Add("Unauthorized!");
+                    return resultDto;
                 }
-            }
-            catch (DbException ex)
-            {
-                _logger.LogError(ex, $"Database error occured while get all Glossaries in GetGlossariesByRange (start index: {startIndex},count: {count},search: {search})");
-                throw;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Unexpected Error occured while get all Glossaries in GetGlossariesByRange (start index: {startIndex},count: {count},search: {search})");
-                throw;
-            }
-        }
-        public async Task<bool> AddGlossariesAsync(GlossaryCreateDTO glossaryCreateDTO, IdentityUser identityUser, CancellationToken cancellation)
-        {
-            try
-            {
-                Glossary glossary = new Glossary(glossaryCreateDTO.TermOfPhrase, glossaryCreateDTO.Explaination, identityUser);
-                return await _glossaryRepository.AddAsync(glossary, cancellation);
-
-            }
-            catch(Exception)
-            {
-                throw;
-            }
-        }
-        public async Task<IEnumerable<Glossary>> GetGlossariesBySearchAsync(string search, CancellationToken cancellationToken)
-        {
-            try
-            {
-                return await _glossaryRepository.SearchByTermAsync(search, cancellationToken);
-
-            }
-            catch (DbException ex)
-            {
-                _logger.LogError(ex, $"Database error occured while get all Glossaries in GetGlossariesAsync: {search}");
+                var identityUser = await _userManager.GetUserAsync(user);
+                if(identityUser ==null)
+                {
+                    resultDto.Message.Add("User doesn't exist");
+                    return resultDto;
+                }
+                glossary.UserCreatedBy = identityUser;
+                glossary.CreateById = identityUser.Id;
+                await _glossaryRepository.AddAsync(glossary);
+                return ResultDto<Guid?>.CreateSuccess();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected Error occured while get all Glossaries in GetGlossariesAsync");
+                logger.LogError(ex, ex.Message);
+                resultDto.Message.Add(ex.Message);
+                return resultDto;
             }
-            return Enumerable.Empty<Glossary>();
         }
 
-        public Task<Glossary> GetServiceByIdAsync(Guid guid)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<IEnumerable<Glossary>> GetServicesAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-        public async Task<int> @int(CancellationToken cancellationToken)
+        public async Task DeleteGlossaryAsync(Guid id, CancellationToken requestAborted)
         {
             try
             {
-                return await _glossaryRepository.GetCountAsync(cancellationToken);
-            }
-            catch (DbException ex)
-            {
-                _logger.LogError(ex, "Error occured while get all count");
+               await _glossaryRepository.DeleteAsync(id);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error occurred while getting glossary count.");
+                logger.LogError(ex, ex.Message);
+                throw new PortalException(ex.Message, ex);
             }
-            return 0;
+        }
+
+        public async Task<PaginatedResultDto<GlossaryDto>> GetGlossariesAsync(FilterDto filterDto, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var resultDto = new PaginatedResultDto<GlossaryDto>();
+                if (filterDto == null)
+                {
+                    var allGlossariesResult = await _glossaryRepository.GetPaginatedAsync();
+
+                    return new PaginatedResultDto<GlossaryDto>
+                    {
+                        CurrentPage = allGlossariesResult.PageIndex,
+                        PageSize = allGlossariesResult.PageSize,
+                        TotalItems = allGlossariesResult.Count,
+                        PageItems = _mapper.Map<IEnumerable<GlossaryDto>>(allGlossariesResult.Items)
+                    };
+                }
+                var paginatedFilter = new PaginatedFilter<Glossary>
+                {
+                    Filter = !string.IsNullOrEmpty(filterDto.Keyword) ? x => x.TermOfPhrase.Contains(filterDto.Keyword) || x.GlossaryExplaination.Contains(filterDto.Keyword) : default,
+                    OrderBy = x => x.OrderBy(x => x.TermOfPhrase.ToLower()),
+                    PageIndex = filterDto.Page ?? default,
+                    PageSize = filterDto.PageSize ?? default,
+                };
+                var paginatedResult = await _glossaryRepository.GetPaginatedAsync(paginatedFilter);
+                if (paginatedResult == null)
+                {
+                    return resultDto;
+                }
+
+                return new PaginatedResultDto<GlossaryDto>
+                {
+                    CurrentPage = paginatedResult.PageIndex,
+                    PageSize = paginatedResult.PageSize,
+                    TotalItems = paginatedResult.Count,
+                    PageItems = _mapper.Map<IEnumerable<GlossaryDto>>(paginatedResult.Items)
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                throw new PortalException(ex.Message, ex);
+            }
+
+        }
+
+        public async Task<ResultDto<Guid?>> UpdateGlossaryAsync(UpdateGlossaryDto updateDTO, CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(updateDTO);
+            var resultDto = new ResultDto<Guid?>();
+            try
+            {
+                if(await ExistGlossaryLocalAsync(_glossaryRepository,updateDTO.Name,updateDTO.Id))
+                {
+                    resultDto.Message.Add("Term Phase name already exist");
+                    return resultDto;
+                }
+                var glossary = Mapper.Map<Glossary>(updateDTO);
+                var updatedId = await _glossaryRepository.UpdateAsync(glossary,cancellationToken);
+                if(updatedId == 0)
+                {
+                    resultDto.Message.Add("Updating the glossary failed");
+                    return resultDto;
+                }
+                resultDto.Data = glossary.Id;
+                resultDto.Success = true;
+                return resultDto;
+            }
+            catch (Exception exception)
+            {
+                logger.LogError(exception, exception.Message);
+                resultDto.Message.Add(exception.Message);
+                return resultDto;
+            }
         }
     }
 }

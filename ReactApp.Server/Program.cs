@@ -6,6 +6,8 @@ using ReactApp.Server.Repository;
 using ReactApp.Server.Services;
 using ReactApp.Server.Repository.Interface;
 using ReactApp.Server.Services.Interface;
+using ReactApp.Server.Mappings;
+using ReactApp.Server.Entity;
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultString"); 
@@ -37,8 +39,11 @@ builder.Services.AddCors(options =>
                .AllowCredentials(); 
     });
 });
+builder.Services.AddScoped<IGenericRepository<Glossary, Guid>, SQLGlossaryRepository>();
 builder.Services.AddScoped<IGlossaryRepository,SQLGlossaryRepository>();
 builder.Services.AddScoped<IGlossaryService, GlossaryService>();
+builder.Services.AddScoped<IGenericRepository<Glossary, Guid>, SQLGlossaryRepository>();
+builder.Services.AddAutoMapper(typeof(ApplicationProfile).Assembly);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

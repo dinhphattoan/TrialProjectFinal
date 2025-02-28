@@ -16,8 +16,10 @@ namespace ReactApp.Server.Data
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
-            builder.Entity<IdentityUser>().HasMany<Glossary>().WithOne(p=>p.UserCreatedBy);
-            builder.Entity<Glossary>().HasKey(p => p.Guid);
+            builder.Entity<IdentityUser>().HasMany<Glossary>()
+                .WithOne(p=>p.UserCreatedBy)
+                .HasForeignKey(p=>p.CreateById);
+            builder.Entity<Glossary>().HasKey(p => p.Id);
             builder.Entity<Glossary>().HasIndex(p => p.TermOfPhrase).IsUnique();
         }
     }

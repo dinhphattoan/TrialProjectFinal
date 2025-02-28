@@ -1,0 +1,13 @@
+C:\Users\toan.dinh\source\repos\ReactApp\ReactApp.Server.Contracts\obj\Debug\net9.0\ReactApp.Server.Contracts.csproj.AssemblyReference.cache
+C:\Users\toan.dinh\source\repos\ReactApp\ReactApp.Server.Contracts\obj\Debug\net9.0\ReactApp.Server.Contracts.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\toan.dinh\source\repos\ReactApp\ReactApp.Server.Contracts\obj\Debug\net9.0\ReactApp.Server.Contracts.AssemblyInfoInputs.cache
+C:\Users\toan.dinh\source\repos\ReactApp\ReactApp.Server.Contracts\obj\Debug\net9.0\ReactApp.Server.Contracts.AssemblyInfo.cs
+C:\Users\toan.dinh\source\repos\ReactApp\ReactApp.Server.Contracts\obj\Debug\net9.0\ReactApp.Server.Contracts.csproj.CoreCompileInputs.cache
+C:\Users\toan.dinh\source\repos\ReactApp\ReactApp.Server.Contracts\obj\Debug\net9.0\ReactApp.Server.Contracts.sourcelink.json
+C:\Users\toan.dinh\source\repos\ReactApp\ReactApp.Server.Contracts\bin\Debug\net9.0\ReactApp.Server.Contracts.deps.json
+C:\Users\toan.dinh\source\repos\ReactApp\ReactApp.Server.Contracts\bin\Debug\net9.0\ReactApp.Server.Contracts.dll
+C:\Users\toan.dinh\source\repos\ReactApp\ReactApp.Server.Contracts\bin\Debug\net9.0\ReactApp.Server.Contracts.pdb
+C:\Users\toan.dinh\source\repos\ReactApp\ReactApp.Server.Contracts\obj\Debug\net9.0\ReactApp.Server.Contracts.dll
+C:\Users\toan.dinh\source\repos\ReactApp\ReactApp.Server.Contracts\obj\Debug\net9.0\refint\ReactApp.Server.Contracts.dll
+C:\Users\toan.dinh\source\repos\ReactApp\ReactApp.Server.Contracts\obj\Debug\net9.0\ReactApp.Server.Contracts.pdb
+C:\Users\toan.dinh\source\repos\ReactApp\ReactApp.Server.Contracts\obj\Debug\net9.0\ref\ReactApp.Server.Contracts.dll
