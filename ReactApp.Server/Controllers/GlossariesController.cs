@@ -1,90 +1,51 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.Common;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ReactApp.Server.Data;
-using ReactApp.Server.DTO;
-using ReactApp.Server.Entity;
-using ReactApp.Server.Repository;
+using ReactApp.Server.Contracts.DTOs.Glossaries;
+using ReactApp.Server.Contracts.Paginations;
+using ReactApp.Server.DTO.Glossary;
 using ReactApp.Server.Services.Interface;
 
 namespace ReactApp.Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "User")]
-    public class GlossariesController(IGlossaryService glossaryService,
-        ILogger<GlossariesController> logger,
-        UserManager<IdentityUser> userManager) : ControllerBase
+    [Authorize]
+    //[Consumes("application/json")]
+    [Produces("application/json")]
+    public class GlossariesController(IGlossaryService glossaryService) : ControllerBase
     {
         private readonly IGlossaryService _glossaryService = glossaryService;
-        private readonly ILogger<GlossariesController> _logger = logger;
-        private readonly UserManager<IdentityUser> _userManager = userManager;
 
         [HttpGet]
-        public async Task<ActionResult<GlossaryRecordResultDTO>> GetGlossariesByRange(
-            [FromQuery] int startIndex = 0,
-            [FromQuery] int count = 80,
-            [FromQuery] string search= "")
+        public async Task<IResult> GetGlossariesAsync([FromQuery] FilterDto filterDto)
         {
-            try
-            {
-                return Ok(await _glossaryService.GetGlossariesByRangeAsync(startIndex, count, search));
-            }
-            catch(ArgumentException ex)
-            {
-                _logger.LogWarning(ex, "Invalid parameters: search={Search}, startIndex={StartIndex}, count={Count}", search, startIndex, count);
-                return BadRequest(ex.Message);
-            }
-            catch(DbException ex)
-            {
-                _logger.LogError(ex, "Database error occurred while searching glossaries with search={Search}, startIndex={StartIndex}, count={Count}", search ?? "", startIndex, count);
-                return StatusCode(500, "An internal server error occurred.");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unexpected error occurred while searching glossaries with search={Search}, startIndex={StartIndex}, count={Count}", search??"", startIndex, count);
-                return StatusCode(500, "An internal server error occurred.");
-            }
+            var glossaryDtos = await _glossaryService.GetGlossariesAsync(filterDto, HttpContext.RequestAborted);
+            return TypedResults.Ok(glossaryDtos);
         }
 
 
-        [HttpPost("add")]
-        [Authorize]
-        public async Task<ActionResult> AddGlossaryAsync([FromBody] GlossaryCreateDTO createDTO)
+        [HttpPost]
+        public async Task<IResult> AddGlossaryAsync([FromBody] AddGlossaryDto createDTO)
         {
-            if(!ModelState.IsValid)
+            var guid = await _glossaryService.AddGlossaryAsync(createDTO, HttpContext.RequestAborted);
+            return TypedResults.Ok(guid);
+        }
+        [HttpDelete]
+        public async Task<IResult> DeleteGlossaryAsync([FromBody] Guid id)
+        {
+            await _glossaryService.DeleteGlossaryAsync(id, HttpContext.RequestAborted);
+            return TypedResults.Ok();
+        }
+        [HttpPatch]
+        public async Task<IResult> UpdateGlossaryAsync(Guid id, [FromBody] UpdateGlossaryDto updateDTO)
+        {
+            if(id != updateDTO.Id )
             {
-                return BadRequest("Invalid argument");
+                return TypedResults.BadRequest();
             }
-            try
-            {
-                if(await _glossaryService.AddGlossariesAsync(createDTO, await _userManager.GetUserAsync(User), HttpContext.RequestAborted))
-                {
-                    return Created();
-                }
-                else
-                {
-                    return StatusCode(500, "An internal server error occured.");
-                }
-            }
-            catch (DbException e)
-            {
-                _logger.LogError(e, "Database error occured while add new glossary");
-                return StatusCode(500, "An interal server error occured.");
-            }
-            catch(Exception e)
-            {
-                _logger.LogError(e, "Unexpected error occured while add new glossary");
-                return StatusCode(500, "An internal server error occured.");
-            }
+            var result = await _glossaryService.UpdateGlossaryAsync(updateDTO, HttpContext.RequestAborted);
+            return TypedResults.Ok(result);
         }
     }
 }

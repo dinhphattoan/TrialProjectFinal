@@ -1,7 +1,7 @@
 import React from "react";
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Link from '@mui/material/Link';
-import { Alert, AlertTitle, Box, Button, ButtonGroup, Card, CardContent, CardMedia, CircularProgress, Divider, Icon, IconButton, Modal, Paper, Skeleton, Stack, TextField, Typography } from "@mui/material";
+import { Box, Button, ButtonGroup, Card, CardContent, CardMedia, CircularProgress, Divider, Icon, IconButton, Modal, Paper, Skeleton, Stack, TextField, Typography } from "@mui/material";
 import Grid from '@mui/material/Grid2';
 import CreateIcon from '@mui/icons-material/Create';
 import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
@@ -168,38 +168,42 @@ const GlossaryPage: React.FC = () => {
 
 
     const AddGlossaryModalOpen = () => SetOpenModel(true);
-    const AddGlossaryModalClose = () => {
+    const CloseAddGlossaryModal = () => {
         SetOpenModel(false);
         SetInputAddTermOfPhraseValue("");
         SetInputAddGlossaryExplainationValue("");
+        fetchGlossaryRecords();
     };
 
-    const retrieveGlossaryRecords = async (searchMode: boolean) => {
+    const fetchGlossaryRecords = async () => {
         SetIsDataFetching(true);
         SetIsSearching(true);
         try {
-
-            let totalCount_URL_BASE: string = "/api/Glossaries/totalcount";
-            if (searchMode) {
-
-                totalCount_URL_BASE = `/api/Glossaries/search/total?value=${searchValue}`;
-            }
             SetSearchResultValue("");
+            let record_URL_BASE = `/api/Glossaries?`;
+            if (searchValue.length !== 0) {
+                record_URL_BASE += `Keyword=${searchValue}&`
+            }
+            record_URL_BASE +=`OrderBy=TermOfPhrase`;
+            record_URL_BASE += '&Desc=false';
+            record_URL_BASE += `&Page=${pageIndex}`
+            if (totalRecordPerPage > 0) {
+                record_URL_BASE += `&PageSize=${totalRecordPerPage}`
+            }
+            const response = await GetResponseServerAPI(record_URL_BASE);
 
-            const responseTotalCount = await GetResponseServerAPI(totalCount_URL_BASE);
-
-            const dataRecordCount = await responseTotalCount.json();
+            if (!response.ok) {
+                SetGlossaryRecords([]);
+                SetEmptyGlossaryRecordInfo("Error retrieves Glossary Record.");
+                return;
+            }
+            const dataJson = await response.json();
+            const dataRecordCount = dataJson.total;
+            const dataRecords = dataJson.data;
             SetTotalRecord(dataRecordCount);
 
             SetTotalPageRecord(Math.ceil(dataRecordCount / totalRecordPerPage));
-
-            let record_URL_BASE = `/api/Glossaries/${pageIndex * totalRecordPerPage}/${totalRecordPerPage}`;
-            if (searchMode) {
-                record_URL_BASE = `/api/Glossaries/search/index?value=${searchValue}&index=${pageIndex}&count=${totalRecordPerPage}`;
-            }
-
-            const recordResponse = await GetResponseServerAPI(record_URL_BASE);
-            const recordJson: GlossaryItem[] = await recordResponse.json();
+            const recordJson: GlossaryItem[] = dataRecords;
             SetEmptyGlossaryRecordInfo("No Glossary found!");
 
             SetGlossaryRecords(recordJson);
@@ -215,15 +219,16 @@ const GlossaryPage: React.FC = () => {
         }
 
     }
-    const handleAddGlossaryTerm = async () => {
+    const createGlossaryTerm = async () => {
         try {
             SetModalSubmitCreateResult(null);
             SetIsInCreatingGlossary(true);
+
             const response = await PostResponseServerAPI("/api/Glossaries/add",
-                { termOfPhrase: inputAddTermOfPhrase, "explaination": inputAddGlossaryExplainationValue });
+                { termOfPhrase: inputAddTermOfPhrase, explaination: inputAddGlossaryExplainationValue });
             if (!response.ok) {
-                AddGlossaryModalClose();
-                retrieveGlossaryRecords(false);
+                CloseAddGlossaryModal();
+                fetchGlossaryRecords();
             }
             SetModalSubmitCreateResult({ submitResult: true, labelMessage: "Successfully Create Glossary Record." });
         }
@@ -240,8 +245,8 @@ const GlossaryPage: React.FC = () => {
     const displayedToRange = toRange > totalRecord ? totalRecord : toRange;
 
     React.useEffect(() => {
-        retrieveGlossaryRecords(false);
-    }, [])
+        fetchGlossaryRecords();
+    }, [searchMode, pageIndex])
 
     const colWidth = { xs: 12, sm: 6, md: 4, lg: 3 } as const;
 
@@ -288,9 +293,13 @@ const GlossaryPage: React.FC = () => {
                                     SetSearchResultValue("Invalid search input");
                                     return;
                                 }
+
                                 SetPageIndex(0);
+                                if (searchMode) {
+                                    fetchGlossaryRecords();
+                                    return;
+                                }
                                 SetSearchMode(true);
-                                await retrieveGlossaryRecords(true);
                             }}
                             disabled={isSeaching}
                         >
@@ -303,9 +312,8 @@ const GlossaryPage: React.FC = () => {
                         }}
                             disabled={!searchMode}
                             onClick={async () => {
-                                SetSearchMode(false);
                                 SetSearchValue("");
-                                await retrieveGlossaryRecords(false);
+                                SetSearchMode(false);
                             }}
                         >Cancel</Button>
                     </Stack>
@@ -360,7 +368,7 @@ const GlossaryPage: React.FC = () => {
                                 <IconButton
                                     onClick={() => {
                                         SetPageIndex(0);
-                                        retrieveGlossaryRecords(false);
+
                                     }}
                                     disabled={pageIndex === 0}
                                     size="small"
@@ -371,7 +379,6 @@ const GlossaryPage: React.FC = () => {
                                 <IconButton
                                     onClick={() => {
                                         SetPageIndex(pageIndex > 0 ? pageIndex - 1 : pageIndex);
-                                        retrieveGlossaryRecords(false);
                                     }}
                                     disabled={pageIndex === 0}
                                     size="small"
@@ -384,7 +391,6 @@ const GlossaryPage: React.FC = () => {
                             <IconButton
                                 onClick={() => {
                                     SetPageIndex(pageIndex < totalPageRecord - 1 ? pageIndex + 1 : pageIndex)
-                                    retrieveGlossaryRecords(false);
                                 }}
                                 disabled={totalRecordPerPage * (pageIndex + 1) >= totalRecord}
                                 size="small"
@@ -395,7 +401,6 @@ const GlossaryPage: React.FC = () => {
                             <IconButton
                                 onClick={() => {
                                     SetPageIndex(totalPageRecord - 1)
-                                    retrieveGlossaryRecords(false);
                                 }
                                 }
                                 disabled={totalRecordPerPage * (pageIndex + 1) >= totalRecord}
@@ -473,7 +478,7 @@ const GlossaryPage: React.FC = () => {
         <Modal
             keepMounted
             open={openModel}
-            onClose={AddGlossaryModalClose}
+            onClose={CloseAddGlossaryModal}
             aria-labelledby="keep-mounted-modal-title"
             aria-describedby="keep-mounted-modal-description"
             hideBackdrop
@@ -531,21 +536,24 @@ const GlossaryPage: React.FC = () => {
 
                             </Stack>
                             <Divider />
-                            <Stack spacing={2} marginTop={2} direction={'row-reverse'}>
-                                <Button onClick={
-                                    handleAddGlossaryTerm
-                                } disabled={
-                                    (inputAddTermOfPhrase.length === 0 || inputAddGlossaryExplainationValue.length === 0)
-                                } size="medium" variant="contained" color="primary" sx={{ borderRadius: '20px' }} >
-                                    {isInCreatingGlossary ? <CircularProgress size={'25px'} /> :
-                                        'Submit'}
-                                </Button>
-                                <Button size="medium" onClick={AddGlossaryModalClose} variant="contained" color="secondary" sx={{ borderRadius: '20px' }}>Cancel</Button>
-                            </Stack>
-                            {modalSubmitCreateResult && (
-                                <Typography color={modalSubmitCreateResult.submitResult ? 'success' : 'error'}
-                                    textAlign={'end'} paddingRight={1} marginTop={1} fontSize={"12px"}>{modalSubmitCreateResult.labelMessage}</Typography>
-                            )}
+                            <>
+                                <Stack spacing={2} marginTop={2} direction={'row-reverse'}>
+                                    <Button onClick={
+                                        createGlossaryTerm
+                                    } disabled={
+                                        (inputAddTermOfPhrase.length === 0 || inputAddGlossaryExplainationValue.length === 0) || modalSubmitCreateResult?.submitResult
+                                    } size="medium" variant="contained" color="primary" sx={{ borderRadius: '20px' }} >
+                                        {isInCreatingGlossary ? <CircularProgress size={'25px'} /> :
+                                            'Submit'}
+                                    </Button>
+                                    <Button size="medium" onClick={CloseAddGlossaryModal} variant="contained" color="secondary" sx={{ borderRadius: '20px' }}>Cancel</Button>
+                                </Stack>
+                                {modalSubmitCreateResult && (
+                                    <Typography color={modalSubmitCreateResult.submitResult ? 'success' : 'error'}
+                                        textAlign={'end'} paddingRight={1} marginTop={1} fontSize={"12px"}>{modalSubmitCreateResult.labelMessage}</Typography>
+                                )}
+                            </>
+
                         </Box>
                     </CardContent>
                 </Card>

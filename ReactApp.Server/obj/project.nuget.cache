@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "RH291YW0Re8=",
+  "dgSpecHash": "sKW12wZoWXQ=",
   "success": true,
   "projectFilePath": "C:\\Users\\toan.dinh\\source\\repos\\ReactApp\\ReactApp.Server\\ReactApp.Server.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\toan.dinh\\.nuget\\packages\\automapper\\14.0.0\\automapper.14.0.0.nupkg.sha512",
     "C:\\Users\\toan.dinh\\.nuget\\packages\\azure.core\\1.38.0\\azure.core.1.38.0.nupkg.sha512",
     "C:\\Users\\toan.dinh\\.nuget\\packages\\azure.identity\\1.11.4\\azure.identity.1.11.4.nupkg.sha512",
     "C:\\Users\\toan.dinh\\.nuget\\packages\\humanizer\\2.14.1\\humanizer.2.14.1.nupkg.sha512",
