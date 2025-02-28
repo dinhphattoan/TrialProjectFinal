@@ -8,8 +8,7 @@ namespace ReactApp.Server.DTO.Glossary
         public required string TermOfPhrase { get; set; }
         [MaxLength(500, ErrorMessage = "500 characters length exceeded!")]
         public required string Explaination { get; set; }
-        [Required]
-        public required string CreatedBy { get; set; }
+
 
     }
 }

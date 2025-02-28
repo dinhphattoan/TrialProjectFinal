@@ -13,18 +13,16 @@ namespace ReactApp.Server.Controllers
     [Authorize]
     //[Consumes("application/json")]
     [Produces("application/json")]
-    public class GlossariesController(IGlossaryService glossaryService) : ControllerBase
+    public class GlossariesController(IGlossaryService glossaryService, UserManager<IdentityUser> userManager) : ControllerBase
     {
         private readonly IGlossaryService _glossaryService = glossaryService;
-
+        private readonly UserManager<IdentityUser> _userManager = userManager;
         [HttpGet]
         public async Task<IResult> GetGlossariesAsync([FromQuery] FilterDto filterDto)
         {
             var glossaryDtos = await _glossaryService.GetGlossariesAsync(filterDto, HttpContext.RequestAborted);
             return TypedResults.Ok(glossaryDtos);
         }
-
-
         [HttpPost]
         public async Task<IResult> AddGlossaryAsync([FromBody] AddGlossaryDto createDTO)
         {

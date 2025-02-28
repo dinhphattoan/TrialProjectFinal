@@ -1,7 +1,10 @@
 import React from "react";
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Link from '@mui/material/Link';
-import { Box, Button, ButtonGroup, Card, CardContent, CardMedia, CircularProgress, Divider, Icon, IconButton, Modal, Paper, Skeleton, Stack, TextField, Typography } from "@mui/material";
+import {
+    Box, Button, ButtonGroup, Card, CardContent, CardMedia, CircularProgress, Divider, Icon,
+    IconButton, Modal, Skeleton, Stack, TextField, Typography
+} from "@mui/material";
 import Grid from '@mui/material/Grid2';
 import CreateIcon from '@mui/icons-material/Create';
 import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
@@ -10,14 +13,27 @@ import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import { GetResponseServerAPI, PostResponseServerAPI } from "../validation";
 import homeLogoImage from '../assets/mainlogo.png';
+import ExceptionReportBox from "../components/ExceptionReportBox";
 interface GlossaryItem {
-    guid: string;
-    termOfPhrase: string;
-    glossaryExplaination: string;
-    dateAdded: string;
-    userCreatedBy: null;
+    id: string;
+    name: string;
+    definition: string;
+    createDate: string;
+    lastModifyDate: string;
 }
-
+interface GlossaryRecords {
+    currentPage: number;
+    pageItems: any[];
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
+}
+interface ModalCreateResult{
+    termInput: boolean;
+    explainationInput: boolean;
+    submitResult: boolean;
+    labelMessage: string;
+}
 const modalStyle = {
     position: 'absolute',
     top: '50%',
@@ -26,21 +42,7 @@ const modalStyle = {
     width: 500,
 };
 
-const EmptyGlossariesComponent: React.FC<{ infoMessage: string }> = ({ infoMessage }) => {
-    return (
-        <Box width={'100%'}>
-            <Paper
-                elevation={3}
-            >
-                <Typography textAlign={'center'} color="info" padding={5}>
-                    {infoMessage}
-                </Typography>
 
-            </Paper>
-        </Box>
-
-    )
-}
 const SkeletonTemplate: React.FC = () => {
     return <>
         <Grid size={{
@@ -95,7 +97,7 @@ const SkeletonTemplate: React.FC = () => {
 
 
 }
-const GlossaryItemComponent: React.FC<GlossaryItem> = ({ termOfPhrase, glossaryExplaination }) => {
+const GlossaryItemComponent: React.FC<GlossaryItem> = ({ name, definition }) => {
     return (
         <>
             <Grid size={{
@@ -105,7 +107,7 @@ const GlossaryItemComponent: React.FC<GlossaryItem> = ({ termOfPhrase, glossaryE
                     padding: '7px'
                 }} >
                 <Typography variant="subtitle2" color="textSecondary">
-                    {termOfPhrase}</Typography>
+                    {name}</Typography>
             </Grid>
             <Grid size={{
                 xs: 12, sm: 9, md: 9, lg: 9,
@@ -115,7 +117,7 @@ const GlossaryItemComponent: React.FC<GlossaryItem> = ({ termOfPhrase, glossaryE
                     overflow: 'auto'
                 }} >
                 <Typography variant="subtitle2" color="textSecondary">
-                    {glossaryExplaination}
+                    {definition}
                 </Typography>
             </Grid>
             <Grid size={{
@@ -135,12 +137,12 @@ const GlossaryGridRecord: React.FC<{ glossaryItems: GlossaryItem[] }> = ({ gloss
         <>
             {glossaryItems.map(item => (
                 <GlossaryItemComponent
-                    key={item.guid}
-                    guid={item.guid}
-                    termOfPhrase={item.termOfPhrase}
-                    glossaryExplaination={item.glossaryExplaination}
-                    dateAdded={item.dateAdded}
-                    userCreatedBy={item.userCreatedBy}
+                    key={item.id}
+                    id={item.id}
+                    name={item.name}
+                    definition={item.definition}
+                    createDate={item.createDate}
+                    lastModifyDate={item.lastModifyDate}
                 />
             ))}
         </>
@@ -148,12 +150,22 @@ const GlossaryGridRecord: React.FC<{ glossaryItems: GlossaryItem[] }> = ({ gloss
 };
 
 const GlossaryPage: React.FC = () => {
-
-    const [glossaryRecords, SetGlossaryRecords] = React.useState<GlossaryItem[]>([]);
+    const defaultGlossaryRecords: GlossaryRecords = {
+        currentPage: 1,
+        pageItems: [],
+        pageSize: 10,
+        totalItems: 0,
+        totalPages: 0
+    }
+    const defaultModalCreateResult: ModalCreateResult={
+        termInput: true,
+        explainationInput: true,
+        submitResult: false,
+        labelMessage: ""
+    }
+    const [glossaryRecords, SetGlossaryRecords] = React.useState<GlossaryRecords>(defaultGlossaryRecords);
     const [isDataFetching, SetIsDataFetching] = React.useState<boolean>(true);
-    const [pageIndex, SetPageIndex] = React.useState<number>(0);
-    const [totalRecord, SetTotalRecord] = React.useState<number>(0);
-    const [totalPageRecord, SetTotalPageRecord] = React.useState<number>(1);
+
     const [emptyGlossaryRecordInfo, SetEmptyGlossaryRecordInfo] = React.useState<string>("No Glossary Record Found");
     const [isSeaching, SetIsSearching] = React.useState<boolean>(false);
     const [searchValue, SetSearchValue] = React.useState<string>("");
@@ -161,7 +173,7 @@ const GlossaryPage: React.FC = () => {
     const [searchResultValue, SetSearchResultValue] = React.useState<string>("");
 
     const [openModel, SetOpenModel] = React.useState<boolean>(false);
-    const [modalSubmitCreateResult, SetModalSubmitCreateResult] = React.useState<{ submitResult: boolean, labelMessage: string } | null>(null);
+    const [modalSubmitCreateResult, SetModalSubmitCreateResult] = React.useState<ModalCreateResult>(defaultModalCreateResult);
     const [inputAddTermOfPhrase, SetInputAddTermOfPhraseValue] = React.useState<string>("");
     const [inputAddGlossaryExplainationValue, SetInputAddGlossaryExplainationValue] = React.useState<string>("");
     const [isInCreatingGlossary, SetIsInCreatingGlossary] = React.useState<boolean>(false);
@@ -171,46 +183,38 @@ const GlossaryPage: React.FC = () => {
     const CloseAddGlossaryModal = () => {
         SetOpenModel(false);
         SetInputAddTermOfPhraseValue("");
+        SetModalSubmitCreateResult(defaultModalCreateResult);
         SetInputAddGlossaryExplainationValue("");
-        fetchGlossaryRecords();
+        // fetchGlossaryRecords(defaultGlossaryRecords);
     };
 
-    const fetchGlossaryRecords = async () => {
+    const fetchGlossaryRecords = async (records: GlossaryRecords) => {
         SetIsDataFetching(true);
         SetIsSearching(true);
         try {
             SetSearchResultValue("");
             let record_URL_BASE = `/api/Glossaries?`;
-            if (searchValue.length !== 0) {
+            if (searchMode && searchValue.length !== 0) {
                 record_URL_BASE += `Keyword=${searchValue}&`
             }
-            record_URL_BASE +=`OrderBy=TermOfPhrase`;
+            record_URL_BASE += `OrderBy=TermOfPhrase`;
             record_URL_BASE += '&Desc=false';
-            record_URL_BASE += `&Page=${pageIndex}`
-            if (totalRecordPerPage > 0) {
-                record_URL_BASE += `&PageSize=${totalRecordPerPage}`
-            }
+            record_URL_BASE += `&Page=${records?.currentPage}`
+            record_URL_BASE += `&PageSize=${records?.pageSize}`
             const response = await GetResponseServerAPI(record_URL_BASE);
 
             if (!response.ok) {
-                SetGlossaryRecords([]);
+                SetGlossaryRecords(defaultGlossaryRecords);
                 SetEmptyGlossaryRecordInfo("Error retrieves Glossary Record.");
                 return;
             }
             const dataJson = await response.json();
-            const dataRecordCount = dataJson.total;
-            const dataRecords = dataJson.data;
-            SetTotalRecord(dataRecordCount);
-
-            SetTotalPageRecord(Math.ceil(dataRecordCount / totalRecordPerPage));
-            const recordJson: GlossaryItem[] = dataRecords;
+            SetGlossaryRecords(dataJson);
             SetEmptyGlossaryRecordInfo("No Glossary found!");
-
-            SetGlossaryRecords(recordJson);
         }
         catch (error) {
             console.error("Error retrieve Glossary Record.", error)
-            SetGlossaryRecords([]);
+            SetGlossaryRecords(defaultGlossaryRecords);
             SetEmptyGlossaryRecordInfo("Error retrieves Glossary Record.");
         }
         finally {
@@ -221,32 +225,34 @@ const GlossaryPage: React.FC = () => {
     }
     const createGlossaryTerm = async () => {
         try {
-            SetModalSubmitCreateResult(null);
+            SetModalSubmitCreateResult(defaultModalCreateResult);
             SetIsInCreatingGlossary(true);
 
-            const response = await PostResponseServerAPI("/api/Glossaries/add",
+            const response = await PostResponseServerAPI("/api/Glossaries",
                 { termOfPhrase: inputAddTermOfPhrase, explaination: inputAddGlossaryExplainationValue });
             if (!response.ok) {
                 CloseAddGlossaryModal();
-                fetchGlossaryRecords();
+                fetchGlossaryRecords(defaultGlossaryRecords);
             }
-            SetModalSubmitCreateResult({ submitResult: true, labelMessage: "Successfully Create Glossary Record." });
+            const data = await response.json();
+            if (!data.success) {
+                SetModalSubmitCreateResult({termInput:false, explainationInput: true ,submitResult: false, labelMessage: "Term are already exist." });
+                return;
+            }
+            SetModalSubmitCreateResult({ termInput:true, explainationInput: true ,submitResult: true, labelMessage: "Successfully Create Glossary Record." });
         }
         catch (error) {
             console.error("Error Create Glossary Record.", error);
-            SetModalSubmitCreateResult({ submitResult: false, labelMessage: "Error Create Glossary Record." });
+            SetModalSubmitCreateResult({ termInput:false, explainationInput: false ,submitResult: false, labelMessage: "Error Create Glossary Record." });
         }
         finally {
             SetIsInCreatingGlossary(false);
         }
     }
-    let totalRecordPerPage: number = 8;
-    const toRange = (pageIndex * totalRecordPerPage + totalRecordPerPage);
-    const displayedToRange = toRange > totalRecord ? totalRecord : toRange;
 
     React.useEffect(() => {
-        fetchGlossaryRecords();
-    }, [searchMode, pageIndex])
+        fetchGlossaryRecords(defaultGlossaryRecords);
+    }, [searchMode])
 
     const colWidth = { xs: 12, sm: 6, md: 4, lg: 3 } as const;
 
@@ -293,10 +299,9 @@ const GlossaryPage: React.FC = () => {
                                     SetSearchResultValue("Invalid search input");
                                     return;
                                 }
-
-                                SetPageIndex(0);
+                                SetGlossaryRecords(defaultGlossaryRecords)
                                 if (searchMode) {
-                                    fetchGlossaryRecords();
+                                    fetchGlossaryRecords(defaultGlossaryRecords);
                                     return;
                                 }
                                 SetSearchMode(true);
@@ -362,48 +367,63 @@ const GlossaryPage: React.FC = () => {
                             sx={{ flexGrow: 1, justifyContent: { lg: 'end' } }}
                         >
                             <Typography>
-                                {pageIndex * totalRecordPerPage + 1} to {displayedToRange} of {totalRecord} Entries |
+
+                                {((glossaryRecords.currentPage - 1) * glossaryRecords.pageSize) + 1}  to {((glossaryRecords.currentPage - 1) * glossaryRecords.pageSize) + glossaryRecords.pageItems.length} of {glossaryRecords.totalItems} Entries |
+
                             </Typography>
                             <ButtonGroup disableElevation>
                                 <IconButton
-                                    onClick={() => {
-                                        SetPageIndex(0);
-
+                                    onClick={async () => {
+                                        await fetchGlossaryRecords({
+                                            ...defaultGlossaryRecords,
+                                            currentPage: 1,
+                                        });
                                     }}
-                                    disabled={pageIndex === 0}
+                                    disabled={glossaryRecords.currentPage === 1 || isDataFetching}
                                     size="small"
                                     aria-label="Go to first page"
                                 >
                                     <SkipPreviousIcon fontSize="inherit" />
                                 </IconButton>
                                 <IconButton
-                                    onClick={() => {
-                                        SetPageIndex(pageIndex > 0 ? pageIndex - 1 : pageIndex);
+                                    onClick={async () => {
+                                        await fetchGlossaryRecords({
+                                            ...defaultGlossaryRecords,
+                                            currentPage: glossaryRecords.currentPage - 1
+                                        });
                                     }}
-                                    disabled={pageIndex === 0}
+                                    disabled={glossaryRecords.currentPage === 1 || isDataFetching}
                                     size="small"
                                     aria-label="Go to previous page"
                                 >
                                     <ArrowBackIosIcon fontSize="inherit" />
                                 </IconButton>
                             </ButtonGroup>
-                            Page {pageIndex + 1} of {totalPageRecord}
+                            Page {glossaryRecords.currentPage} of {glossaryRecords.totalPages}
                             <IconButton
-                                onClick={() => {
-                                    SetPageIndex(pageIndex < totalPageRecord - 1 ? pageIndex + 1 : pageIndex)
+                                onClick={async () => {
+                                    await fetchGlossaryRecords({
+                                        ...defaultGlossaryRecords,
+                                        currentPage: glossaryRecords.currentPage + 1
+                                        
+                                    });
                                 }}
-                                disabled={totalRecordPerPage * (pageIndex + 1) >= totalRecord}
+                                disabled={glossaryRecords.currentPage == glossaryRecords.totalPages ||
+                                    isDataFetching}
                                 size="small"
                                 aria-label="Go to next page"
                             >
                                 <ArrowForwardIosIcon fontSize="inherit" />
                             </IconButton>
                             <IconButton
-                                onClick={() => {
-                                    SetPageIndex(totalPageRecord - 1)
-                                }
-                                }
-                                disabled={totalRecordPerPage * (pageIndex + 1) >= totalRecord}
+                                onClick={async () => {
+                                    await fetchGlossaryRecords({
+                                        ...defaultGlossaryRecords,
+                                        currentPage: glossaryRecords.totalPages
+                                    });
+                                }}
+                                disabled={glossaryRecords.currentPage == glossaryRecords.totalPages ||
+                                    isDataFetching}
                                 size="small"
                                 aria-label="Go to last page"
                             >
@@ -466,8 +486,8 @@ const GlossaryPage: React.FC = () => {
                     {/*====================*/}
                     {
                         isDataFetching ? <SkeletonTemplate /> :
-                            glossaryRecords.length == 0 ? <EmptyGlossariesComponent infoMessage={emptyGlossaryRecordInfo} /> :
-                                <GlossaryGridRecord glossaryItems={glossaryRecords} />
+                            glossaryRecords.totalItems == 0 ? <ExceptionReportBox infoMessage={emptyGlossaryRecordInfo} /> :
+                                <GlossaryGridRecord glossaryItems={glossaryRecords.pageItems} />
 
                     }
                 </Grid>
@@ -515,7 +535,7 @@ const GlossaryPage: React.FC = () => {
                                     }}
                                     value={inputAddTermOfPhrase}
                                     error={inputAddTermOfPhrase.length > 50
-                                        || (modalSubmitCreateResult !== null && !modalSubmitCreateResult.submitResult)
+                                        || (!modalSubmitCreateResult?.termInput)
                                     }
                                 />
                                 <TextField multiline
@@ -524,7 +544,7 @@ const GlossaryPage: React.FC = () => {
                                         SetInputAddGlossaryExplainationValue(e.target.value);
                                     }}
                                     error={inputAddGlossaryExplainationValue.length > 500
-                                        || (modalSubmitCreateResult !== null && !modalSubmitCreateResult.submitResult)
+                                        || (!modalSubmitCreateResult?.explainationInput)
                                     }
                                     inputMode="text"
                                     label="Glossary Explaination *"
@@ -541,11 +561,12 @@ const GlossaryPage: React.FC = () => {
                                     <Button onClick={
                                         createGlossaryTerm
                                     } disabled={
-                                        (inputAddTermOfPhrase.length === 0 || inputAddGlossaryExplainationValue.length === 0) || modalSubmitCreateResult?.submitResult
+                                        !modalSubmitCreateResult?.submitResult? (inputAddTermOfPhrase.length === 0 || inputAddGlossaryExplainationValue.length === 0) : true
                                     } size="medium" variant="contained" color="primary" sx={{ borderRadius: '20px' }} >
                                         {isInCreatingGlossary ? <CircularProgress size={'25px'} /> :
                                             'Submit'}
                                     </Button>
+                                    
                                     <Button size="medium" onClick={CloseAddGlossaryModal} variant="contained" color="secondary" sx={{ borderRadius: '20px' }}>Cancel</Button>
                                 </Stack>
                                 {modalSubmitCreateResult && (

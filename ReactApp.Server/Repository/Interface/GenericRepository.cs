@@ -29,11 +29,11 @@ namespace ReactApp.Server.Repository.Interface
             var count = await query.CountAsync();
             if (paginatedFilter?.PageIndex is not null &&
                 paginatedFilter?.PageSize is not null &&
-                paginatedFilter?.PageIndex >= 0 &&
+                paginatedFilter?.PageIndex > 0 &&
                 paginatedFilter?.PageSize > 0)
             {
 
-                var startIndex = ((paginatedFilter.PageIndex - 1)<0? 0: (paginatedFilter.PageIndex - 1)) * paginatedFilter.PageSize ?? default;
+                var startIndex = ((paginatedFilter.PageIndex - 1) < 0 ? 0 : (paginatedFilter.PageIndex - 1)) * paginatedFilter.PageSize ?? default;
                 var items = await query.Skip(startIndex).Take(paginatedFilter.PageSize.Value).AsNoTracking().ToListAsync();
                 result.Items = items;
                 result.PageSize = paginatedFilter.PageSize.Value;
@@ -90,7 +90,7 @@ namespace ReactApp.Server.Repository.Interface
         {
             ArgumentNullException.ThrowIfNull(entity);
             var exist = await _dbSet.FindAsync(entity.Id, cancellationToken);
-            if(exist!=null)
+            if (exist != null)
             {
                 _dbSet.Entry(exist).CurrentValues.SetValues(entity);
             }

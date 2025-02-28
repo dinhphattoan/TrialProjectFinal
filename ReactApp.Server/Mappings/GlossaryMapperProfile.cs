@@ -20,8 +20,7 @@ namespace ReactApp.Server.Contracts.Mappings
                 .ForMember(dest => dest.TermOfPhrase, opt => opt.MapFrom(src => src.TermOfPhrase))
                 .ForMember(dest => dest.GlossaryExplaination, opt => opt.MapFrom(src => src.Explaination))
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.NewGuid()))
-                .ForMember(dest => dest.DateAdded, opt => opt.MapFrom(src => DateTime.UtcNow))
-                .ForMember(dest => dest.UserCreatedBy, opt => opt.MapFrom(src =>src.CreatedBy));
+                .ForMember(dest => dest.DateAdded, opt => opt.MapFrom(src => DateTime.UtcNow));
         }
     }
 }

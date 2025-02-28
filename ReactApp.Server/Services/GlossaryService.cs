@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using ReactApp.Server.Contracts.DTOs;
 using ReactApp.Server.Contracts.DTOs.Glossaries;
 using ReactApp.Server.Contracts.Exceptions;
@@ -18,12 +20,18 @@ namespace ReactApp.Server.Services
         private readonly ILogger<GlossaryService> _logger;
         private readonly IGenericRepository<Glossary,Guid> _glossaryRepository;
         private readonly IMapper _mapper;
-
-        public GlossaryService(ILogger<GlossaryService> logger, IGenericRepository<Glossary,Guid> glossaryRepository, IMapper mapper) : base(logger, mapper)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly UserManager<IdentityUser> _userManager;
+        public GlossaryService(ILogger<GlossaryService> logger, 
+            IGenericRepository<Glossary,Guid> glossaryRepository,
+            IMapper mapper, IHttpContextAccessor httpContextAccessor,
+            UserManager<IdentityUser> userManager) : base(logger, mapper)
         {
             _logger = logger;
             _glossaryRepository = glossaryRepository;
             _mapper = mapper;
+            _httpContextAccessor = httpContextAccessor;
+            _userManager = userManager;
         }
         static async Task<bool> ExistGlossaryLocalAsync(IGenericRepository<Glossary, Guid> glossaryRepository, string termOfPhrase, Guid? id)
         {
@@ -37,8 +45,6 @@ namespace ReactApp.Server.Services
         public async Task<ResultDto<Guid?>> AddGlossaryAsync(AddGlossaryDto createDTO, CancellationToken cancellationToken = default)
         {
 
-            
-
             ArgumentNullException.ThrowIfNull(createDTO);
             var resultDto = new ResultDto<Guid?>();
             try
@@ -49,9 +55,22 @@ namespace ReactApp.Server.Services
                     return resultDto;
                 }
                 Glossary glossary = Mapper.Map<Glossary>(createDTO);
+                var user = _httpContextAccessor.HttpContext?.User;
+                if (user == null)
+                {
+                    resultDto.Message.Add("Unauthorized!");
+                    return resultDto;
+                }
+                var identityUser = await _userManager.GetUserAsync(user);
+                if(identityUser ==null)
+                {
+                    resultDto.Message.Add("User doesn't exist");
+                    return resultDto;
+                }
+                glossary.UserCreatedBy = identityUser;
+                glossary.CreateById = identityUser.Id;
                 await _glossaryRepository.AddAsync(glossary);
-                resultDto.Data = glossary.Id;
-                return resultDto;
+                return ResultDto<Guid?>.CreateSuccess();
             }
             catch (Exception ex)
             {

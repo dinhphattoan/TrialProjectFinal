@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Navigation } from '@toolpad/core/AppProvider';
-import { UserSessionValidation } from '../validation';
-import { Navigate } from 'react-router-dom';
+import { GetResponseServerAPI, PostResponseServerAPI, UserSessionValidation } from '../validation';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Session } from '@toolpad/core/AppProvider';
 import LoadingComponent from './Loading';
 import { ReactRouterAppProvider } from '@toolpad/core/react-router';
@@ -112,27 +112,33 @@ export default function DashboardLayoutBasic() {
     const checkIsLoggedIn = async (): Promise<boolean> => {
         return UserSessionValidation();
     }
+    const handleloggout = async () => {
+        const response = await PostResponseServerAPI("api/Accounts/logout", {});
+        if (!response.ok) {
+            return;
+        }
+        SetIsUserLoggedIn(false);
+    }
+    const navgiator = useNavigate();
     const [session, SetSession] = React.useState<Session | null>(null);
     const authentication = React.useMemo(() => {
         return {
-            //   signIn: () => {
-            //     SetSession({
-            //       user: {
-            //         name: 'Bharat Kashyap',
-            //         email: 'bharatkashyap@outlook.com',
-            //         image: 'https://avatars.githubusercontent.com/u/19550456',
-            //       },
-            //     });
-            //   },
-            signOut: () => {
+            signIn: async () => {
+                const response = await GetResponseServerAPI("api/Accounts/authenticated");
+                const data = await response.json();
+                SetSession({
+                    user: {
+                        name: data.username,
+                        image: 'https://avatars.githubusercontent.com/u/19550456',
+                    },
+                });
+            },
+            signOut: async () => {
                 SetSession(null);
+                await handleloggout();
+                navgiator('/login');
             },
         };
-    }, []);
-    React.useEffect(() => {
-        const checkLoginStatus = async () => {
-            SetIsLoading(true);
-        }
     }, []);
     React.useEffect(() => {
         const checkLoginStatus = async () => {
@@ -140,7 +146,11 @@ export default function DashboardLayoutBasic() {
             const isLoggedIn = await checkIsLoggedIn();
             SetIsLoading(false);
             SetIsUserLoggedIn(isLoggedIn);
+            if (isLoggedIn) {
+                await authentication.signIn();
+            }
         }
+        
         checkLoginStatus();
     }, [])
 
@@ -152,9 +162,8 @@ export default function DashboardLayoutBasic() {
         return <Navigate to="/login" replace />
     }
 
-
     return (
-        <ReactRouterAppProvider session={session} authentication={authentication} navigation={NAVIGATION}>
+        <ReactRouterAppProvider session={session} authentication={authentication}  navigation={NAVIGATION}>
             <Layout />
         </ReactRouterAppProvider>
 

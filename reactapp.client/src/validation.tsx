@@ -50,7 +50,6 @@ export const GetResponseServerAPI = async (url: string): Promise<Response> => {
       // console.error(errorMessage);
       throw new Error(errorMessage);
     }
-
     return response;
   }
   catch (error) {

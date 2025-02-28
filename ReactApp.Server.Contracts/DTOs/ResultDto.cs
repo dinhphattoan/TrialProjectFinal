@@ -10,8 +10,8 @@ namespace ReactApp.Server.Contracts.DTOs
 #pragma warning disable CS8625
     public class ResultDto<T>
     {
- 
-        public List<string> Message { get; set; }
+
+        public List<string> Message { get; set; } = new();
         public bool Success { get; set; }
         public T Data { get; set; }
         public static ResultDto<T> CreateSuccess(string message = default, T data = default)
